@@ -41,8 +41,8 @@ export function CollaboratorEditModal({
 
     const map: Record<string, { enabled: boolean; commission: string }> = {};
     allServices.forEach((s) => {
-      const cs = collaborator.collaborator_services?.find((cs) => cs.service_id === s.id);
-      map[s.id] = { enabled: !!cs, commission: cs?.commission?.toString() || '' };
+      const match = collaborator.collaborator_services?.find((entry) => entry.service_id === s.id);
+      map[s.id] = { enabled: !!match, commission: match?.commission?.toString() || '' };
     });
     setServiceMap(map);
   }, [collaborator, allServices]);

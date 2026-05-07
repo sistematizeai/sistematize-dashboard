@@ -12,18 +12,22 @@ export default function ServicesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editService, setEditService] = useState<Service | null>(null);
   const [showNewService, setShowNewService] = useState<string | undefined>(undefined);
   const [showNewCategory, setShowNewCategory] = useState(false);
 
   const fetchData = async () => {
     try {
+      setError(null);
       const [catRes, svcRes] = await Promise.all([
         api.get('/api/categories'),
         api.get('/api/services'),
       ]);
       setCategories(catRes.data);
       setServices(svcRes.data);
+    } catch {
+      setError('Erro ao carregar servicos. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -51,6 +55,12 @@ export default function ServicesPage() {
 
   return (
     <div>
+      {error && (
+        <div className="mb-5 p-4 bg-[var(--color-rose-soft)] border border-[rgba(239,68,68,0.2)] rounded-xl text-[var(--color-rose)] text-sm font-medium flex items-center justify-between">
+          {error}
+          <button onClick={fetchData} className="ml-3 underline cursor-pointer">Tentar novamente</button>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-7">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--color-text-primary)] tracking-tight">Servicos</h1>

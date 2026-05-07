@@ -11,17 +11,21 @@ export default function CollaboratorsPage() {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editCollaborator, setEditCollaborator] = useState<Collaborator | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
 
   const fetchData = async () => {
     try {
+      setError(null);
       const [colRes, svcRes] = await Promise.all([
         api.get('/api/collaborators'),
         api.get('/api/services'),
       ]);
       setCollaborators(colRes.data);
       setServices(svcRes.data);
+    } catch {
+      setError('Erro ao carregar colaboradores. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -39,6 +43,12 @@ export default function CollaboratorsPage() {
 
   return (
     <div>
+      {error && (
+        <div className="mb-5 p-4 bg-[var(--color-rose-soft)] border border-[rgba(239,68,68,0.2)] rounded-xl text-[var(--color-rose)] text-sm font-medium flex items-center justify-between">
+          {error}
+          <button onClick={fetchData} className="ml-3 underline cursor-pointer">Tentar novamente</button>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-7">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--color-text-primary)] tracking-tight">Colaboradores</h1>

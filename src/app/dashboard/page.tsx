@@ -5,14 +5,7 @@ import api from '@/lib/api-client';
 import { KpiCard } from '@/components/ui/kpi-card';
 import { CollaboratorPerformance } from '@/components/dashboard/collaborator-performance';
 import { UpcomingAppointments } from '@/components/dashboard/upcoming-appointments';
-import type { DashboardStats, Appointment } from '@/types';
-
-interface CollaboratorPerformanceData {
-  collaborator_id: string;
-  collaborator_name: string;
-  total_appointments: number;
-  total_revenue: number;
-}
+import type { DashboardStats, Appointment, CollaboratorPerformanceData } from '@/types';
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
@@ -22,26 +15,29 @@ export default function DashboardPage() {
   const [upcoming, setUpcoming] = useState<Appointment[]>([]);
   const [performance, setPerformance] = useState<CollaboratorPerformanceData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [statsRes, upcomingRes, perfRes] = await Promise.all([
-          api.get<DashboardStats>('/api/dashboard/stats'),
-          api.get<Appointment[]>('/api/dashboard/upcoming'),
-          api.get<CollaboratorPerformanceData[]>('/api/dashboard/collaborator-performance'),
-        ]);
-        setStats(statsRes.data);
-        setUpcoming(upcomingRes.data);
-        setPerformance(perfRes.data);
-      } catch (err) {
-        console.error('Failed to load dashboard data', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchData();
   }, []);
+
+  async function fetchData() {
+    try {
+      setError(null);
+      const [statsRes, upcomingRes, perfRes] = await Promise.all([
+        api.get<DashboardStats>('/api/dashboard/stats'),
+        api.get<Appointment[]>('/api/dashboard/upcoming'),
+        api.get<CollaboratorPerformanceData[]>('/api/dashboard/collaborator-performance'),
+      ]);
+      setStats(statsRes.data);
+      setUpcoming(upcomingRes.data);
+      setPerformance(perfRes.data);
+    } catch {
+      setError('Erro ao carregar dados do dashboard. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -53,6 +49,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="p-4 bg-[var(--color-rose-soft)] border border-[rgba(239,68,68,0.2)] rounded-xl text-[var(--color-rose)] text-sm font-medium flex items-center justify-between">
+          {error}
+          <button onClick={fetchData} className="ml-3 underline cursor-pointer">Tentar novamente</button>
+        </div>
+      )}
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">

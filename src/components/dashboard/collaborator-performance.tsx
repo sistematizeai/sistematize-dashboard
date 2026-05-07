@@ -1,11 +1,6 @@
 'use client';
 
-interface CollaboratorPerformanceData {
-  collaborator_id: string;
-  collaborator_name: string;
-  total_appointments: number;
-  total_revenue: number;
-}
+import type { CollaboratorPerformanceData } from '@/types';
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);

@@ -134,3 +134,10 @@ export interface DashboardStats {
   new_clients: number;
   no_show_rate: number;
 }
+
+export interface CollaboratorPerformanceData {
+  collaborator_id: string;
+  collaborator_name: string;
+  total_appointments: number;
+  total_revenue: number;
+}
