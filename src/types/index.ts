@@ -12,14 +12,60 @@ export interface AuthResponse {
   user: { id: string; role: string; business_id: string | null };
 }
 
+export interface BusinessHours {
+  [day: string]: { open: string; close: string; enabled: boolean; lunch_start?: string; lunch_end?: string };
+}
+
+export type HeroLayout = 'split' | 'fullcover' | 'minimal';
+
+export interface BookingSettings {
+  min_interval_minutes: number;
+  min_advance_hours: number;
+  max_advance_days: number;
+  allow_overlap: boolean;
+  auto_confirm: boolean;
+  hero_layout?: HeroLayout;
+  show_hero_badges?: boolean;
+}
+
+export interface NotificationSettings {
+  email_reminder_enabled: boolean;
+  reminder_advance_hours: number;
+  confirmation_template: string;
+  reminder_template: string;
+}
+
 export interface Business {
   id: string;
+  owner_id: string;
   name: string;
   slug: string;
+  logo_url: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  cep: string | null;
+  cnpj: string | null;
+  description: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  tiktok: string | null;
+  cover_image_url: string | null;
+  welcome_message: string | null;
+  primary_color: string | null;
+  cancellation_policy: string | null;
+  booking_enabled: boolean;
+  booking_settings: BookingSettings | null;
+  notification_settings: NotificationSettings | null;
+  business_hours: BusinessHours | null;
   subscription_status: string;
   trial_ends_at: string;
   plan_id: string | null;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Category {
@@ -45,6 +91,7 @@ export interface Service {
   price_type: 'fixed' | 'starting_at' | 'on_request';
   duration_minutes: number;
   is_active: boolean;
+  image_url: string | null;
   sort_order: number;
   category?: Pick<Category, 'id' | 'name' | 'color'>;
   created_at: string;
@@ -74,11 +121,19 @@ export interface Collaborator {
 
 export interface CollaboratorService {
   id: string;
-  collaborator_id: string;
   service_id: string;
   commission: number | null;
-  is_active: boolean;
-  service?: Pick<Service, 'id' | 'name' | 'price' | 'duration_minutes' | 'category_id'>;
+  service?: Pick<Service, 'id' | 'name' | 'category_id'>;
+}
+
+export interface CollaboratorSchedule {
+  day_of_week: number;
+  day_name: string;
+  is_working: boolean;
+  work_start: string;
+  work_end: string;
+  lunch_start: string | null;
+  lunch_end: string | null;
 }
 
 export interface Client {
@@ -92,6 +147,7 @@ export interface Client {
   notes: string | null;
   is_active: boolean;
   appointments?: Appointment[];
+  appointment_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -133,11 +189,76 @@ export interface DashboardStats {
   revenue: number;
   new_clients: number;
   no_show_rate: number;
+  ticket_medio: number;
+  trends: {
+    appointments: number | null;
+    revenue: number | null;
+    new_clients: number | null;
+    no_show_rate: number | null;
+    ticket_medio: number | null;
+  };
 }
 
 export interface CollaboratorPerformanceData {
-  collaborator_id: string;
-  collaborator_name: string;
-  total_appointments: number;
-  total_revenue: number;
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  appointments_count: number;
+  revenue: number;
+  ticket_medio: number;
+}
+
+export interface RevenueChartPoint {
+  date: string;
+  revenue: number;
+}
+
+export interface StatusCount {
+  status: string;
+  count: number;
+}
+
+export interface ServiceRevenue {
+  name: string;
+  revenue: number;
+}
+
+export interface PopularService {
+  name: string;
+  count: number;
+}
+
+export interface DailyAppointmentPoint {
+  date: string;
+  label: string;
+  total: number;
+  completed: number;
+  cancelled: number;
+  is_today: boolean;
+}
+
+export interface PeakHourSlot {
+  hour: string;
+  count: number;
+  percentage: number;
+}
+
+export interface PeakHourDay {
+  day: string;
+  hours: PeakHourSlot[];
+}
+
+export interface Combo {
+  id: string;
+  business_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  discount_percent: number;
+  image_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  services?: Pick<Service, 'id' | 'name' | 'price' | 'duration_minutes'>[];
+  created_at: string;
+  updated_at: string;
 }

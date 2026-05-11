@@ -14,7 +14,7 @@ export function CollaboratorCard({ collaborator, onClick }: { collaborator: Coll
       className="bg-white rounded-2xl border border-[var(--color-border)] p-5 cursor-pointer hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:border-[var(--color-border-light)] transition-all"
     >
       <div className="flex items-center gap-3.5 mb-4">
-        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#a78bfa] to-[#7c3aed] flex items-center justify-center text-white font-bold text-sm shrink-0">
+        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#7B8AF2] to-[#4F5AE5] flex items-center justify-center text-white font-bold text-sm shrink-0">
           {collaborator.name.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">

@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<{ requires_2fa?: boolean; temp_token?: string; blocked?: boolean }>;
+  loginWithToken: (newToken: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -25,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(savedToken);
       api.get('/api/profiles/me')
         .then((res) => setUser(res.data))
-        .catch(() => { localStorage.removeItem('token'); })
+        .catch(() => { localStorage.removeItem('token'); setToken(null); })
         .finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
@@ -47,6 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {};
   };
 
+  const loginWithToken = async (newToken: string) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    const profileRes = await api.get('/api/profiles/me');
+    setUser(profileRes.data);
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -54,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, loginWithToken, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 import api from '@/lib/api-client';
 
 export function CompleteRegistrationForm() {
   const router = useRouter();
+  const { loginWithToken } = useAuth();
   const [form, setForm] = useState({ document: '', business_name: '', full_name: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,7 +18,7 @@ export function CompleteRegistrationForm() {
     setLoading(true);
     try {
       const res = await api.post('/api/auth/complete-registration', form);
-      localStorage.setItem('token', res.data.token);
+      await loginWithToken(res.data.token);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao completar cadastro');

@@ -49,11 +49,6 @@ export function AppointmentDetailModal({
                 {appointment.client.phone}
               </span>
             )}
-            {appointment.client?.email && (
-              <span className="text-sm text-[var(--color-text-muted)]">
-                {appointment.client.email}
-              </span>
-            )}
           </div>
         </div>
         <Badge variant={appointment.status}>{STATUS_LABELS[appointment.status]}</Badge>
@@ -123,7 +118,7 @@ export function AppointmentDetailModal({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#a78bfa] to-[#7c3aed] flex items-center justify-center text-[9px] font-bold text-white">
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#7B8AF2] to-[#4F5AE5] flex items-center justify-center text-[9px] font-bold text-white">
             {appointment.collaborator?.name?.charAt(0)?.toUpperCase() || 'C'}
           </div>
           <span className="font-medium">{appointment.collaborator?.name || 'Colaborador'}</span>
@@ -145,7 +140,7 @@ export function AppointmentDetailModal({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[var(--color-accent)]" />
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#4A6CF7] to-[#6C5CE7]" />
                   <span className="text-sm font-medium text-[var(--color-text-primary)]">
                     {s.service?.name || 'Servico'}
                   </span>

@@ -4,6 +4,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { TrialGuard } from '@/components/trial-guard';
 import { useAuth } from '@/lib/auth';
 import { usePathname, useRouter } from 'next/navigation';
+import { Logo } from '@/components/ui/logo';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
@@ -23,22 +24,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <TrialGuard>
         <div className="min-h-screen bg-[var(--color-bg-deep)]">
           {/* TOPBAR */}
-          <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/85 backdrop-blur-xl border-b border-[var(--color-border)] flex items-center px-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <div className="flex items-center gap-3 mr-10">
-              <div className="w-[34px] h-[34px] rounded-[10px] bg-gradient-to-br from-[#a78bfa] to-[#7c3aed] flex items-center justify-center shadow-[0_4px_12px_rgba(124,58,237,0.25)]">
-                <svg className="w-[18px] h-[18px] stroke-white stroke-[2.5] fill-none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
-              </div>
-              <span className="text-lg font-extrabold text-[var(--color-text-primary)] tracking-tight">Sistematize</span>
+          <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white grid grid-cols-[auto_1fr_auto] items-center px-7">
+            <div className="flex items-center">
+              <Logo height={30} />
             </div>
 
-            <nav className="flex items-center gap-0.5">
+            <nav className="flex items-center justify-center gap-1">
               {NAV_ITEMS.map(item => {
                 const isActive = item.path === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.path);
                 return (
                   <button
                     key={item.path}
                     onClick={() => router.push(item.path)}
-                    className={`px-3.5 py-2 rounded-[10px] text-[13px] font-medium cursor-pointer transition-all whitespace-nowrap ${
+                    className={`px-4 py-2.5 rounded-xl text-[15px] font-medium cursor-pointer transition-all whitespace-nowrap ${
                       isActive
                         ? 'text-[var(--color-accent)] bg-[var(--color-accent-soft)] font-semibold'
                         : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-black/[0.03]'
@@ -50,17 +48,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               })}
             </nav>
 
-            <div className="flex items-center gap-2.5 ml-auto">
-              <span className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-gradient-to-br from-[rgba(124,58,237,0.08)] to-[rgba(167,139,250,0.08)] border border-[rgba(124,58,237,0.15)] text-[var(--color-accent)]">
-                Trial
-              </span>
-              <div
-                className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-[#a78bfa] to-[#7c3aed] flex items-center justify-center text-white font-bold text-[13px] cursor-pointer shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
-                onClick={logout}
-                title="Sair"
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={() => router.push('/dashboard/settings')}
+                title="Configuracoes"
+                className={`w-[38px] h-[38px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
+                  pathname === '/dashboard/settings'
+                    ? 'bg-gradient-to-br from-[#7B8AF2] to-[#4F5AE5] shadow-[0_2px_8px_rgba(79,90,229,0.25)]'
+                    : 'bg-[var(--color-bg-surface)] border border-[var(--color-border)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]'
+                }`}
               >
-                {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke={pathname === '/dashboard/settings' ? '#fff' : 'var(--color-text-secondary)'}
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                </svg>
+              </button>
             </div>
           </header>
 
