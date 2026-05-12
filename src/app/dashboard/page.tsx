@@ -83,7 +83,7 @@ export default function DashboardPage() {
           api.get<RevenueChartPoint[]>('/api/dashboard/revenue-chart', { params }),
           api.get<StatusCount[]>('/api/dashboard/appointments-by-status', { params }),
           api.get<ServiceRevenue[]>('/api/dashboard/revenue-by-service', { params }),
-          api.get<Client[]>('/api/clients'),
+          api.get<{ data: Client[] }>('/api/clients'),
           api.get<PeakHourDay[]>('/api/dashboard/peak-hours'),
           api.get<DailyAppointmentPoint[]>('/api/dashboard/daily-appointments'),
           api.get<PopularService[]>('/api/dashboard/popular-services', { params }),
@@ -95,7 +95,7 @@ export default function DashboardPage() {
       setRevenueChart(revenueRes.data);
       setStatusData(statusRes.data);
       setServiceRevenue(svcRevenueRes.data);
-      setRecentClients(Array.isArray(clientsRes.data) ? clientsRes.data : clientsRes.data?.data || []);
+      setRecentClients(clientsRes.data?.data || []);
       setPeakHours(peakRes.data);
       setDailyAppts(dailyRes.data);
       setPopularServices(popRes.data);
