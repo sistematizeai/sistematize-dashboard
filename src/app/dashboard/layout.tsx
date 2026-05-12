@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { label: 'Agenda', path: '/dashboard/appointments', icon: 'calendar' },
   { label: 'Clientes', path: '/dashboard/clients', icon: 'user' },
   { label: 'Financeiro', path: '/dashboard/financial', icon: 'dollar' },
+  { label: 'Assinatura', path: '/dashboard/subscription', icon: 'crown' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
