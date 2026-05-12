@@ -86,7 +86,7 @@ export default function SubscriptionPage() {
         api.get('/api/subscription/current'),
         api.get('/api/subscription/invoices?limit=10'),
       ]);
-      setPlans(plansRes.data);
+      setPlans(plansRes.data || []);
       setSubscription(subRes.data?.id ? subRes.data : null);
       setInvoices(invRes.data?.data || []);
     } catch {

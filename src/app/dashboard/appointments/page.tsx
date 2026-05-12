@@ -133,9 +133,9 @@ export default function AppointmentsPage() {
       api.get('/api/collaborators'),
       api.get('/api/services'),
     ]).then(([cRes, colRes, sRes]) => {
-      setClients(cRes.data);
-      setCollaborators(colRes.data);
-      setServices(sRes.data);
+      setClients(cRes.data?.data || cRes.data || []);
+      setCollaborators(colRes.data || []);
+      setServices(sRes.data || []);
     }).catch(() => {
       // failed to load auxiliary data
     });
@@ -172,7 +172,7 @@ export default function AppointmentsPage() {
         params.set('collaborator_id', filters.collaborator_id);
       }
       const res = await api.get(`/api/appointments?${params.toString()}`);
-      setAppointments(res.data);
+      setAppointments(res.data?.data || res.data || []);
     } catch {
       setError('Erro ao carregar agendamentos. Tente novamente.');
     } finally {

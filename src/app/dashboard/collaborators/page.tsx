@@ -23,8 +23,8 @@ export default function CollaboratorsPage() {
         api.get('/api/collaborators'),
         api.get('/api/services'),
       ]);
-      setCollaborators(colRes.data);
-      setServices(svcRes.data);
+      setCollaborators(colRes.data || []);
+      setServices(svcRes.data || []);
     } catch {
       setError('Erro ao carregar colaboradores. Tente novamente.');
     } finally {

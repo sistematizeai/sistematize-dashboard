@@ -90,15 +90,15 @@ export default function DashboardPage() {
         ]);
       if (periodRef.current !== p) return;
       setStats(statsRes.data);
-      setUpcoming(upcomingRes.data);
-      setPerformance(perfRes.data);
-      setRevenueChart(revenueRes.data);
-      setStatusData(statusRes.data);
-      setServiceRevenue(svcRevenueRes.data);
+      setUpcoming(upcomingRes.data || []);
+      setPerformance(perfRes.data || []);
+      setRevenueChart(revenueRes.data || []);
+      setStatusData(statusRes.data || []);
+      setServiceRevenue(svcRevenueRes.data || []);
       setRecentClients(clientsRes.data?.data || []);
-      setPeakHours(peakRes.data);
-      setDailyAppts(dailyRes.data);
-      setPopularServices(popRes.data);
+      setPeakHours(peakRes.data || []);
+      setDailyAppts(dailyRes.data || []);
+      setPopularServices(popRes.data || []);
     } catch {
       setError('Erro ao carregar dados do dashboard. Tente novamente.');
     } finally {

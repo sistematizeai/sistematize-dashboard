@@ -34,9 +34,9 @@ export default function ServicesPage() {
         api.get('/api/services'),
         api.get('/api/combos'),
       ]);
-      setCategories(catRes.data);
-      setServices(svcRes.data);
-      setCombos(comboRes.data);
+      setCategories(catRes.data || []);
+      setServices(svcRes.data || []);
+      setCombos(comboRes.data || []);
     } catch {
       setError('Erro ao carregar servicos. Tente novamente.');
     } finally {
