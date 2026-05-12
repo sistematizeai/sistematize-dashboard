@@ -22,7 +22,7 @@ export function ServiceEditModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [form, setForm] = useState({ name: '', category_id: '', price_type: 'fixed', duration_minutes: 30, price: 0, description: '', is_active: true });
+  const [form, setForm] = useState({ name: '', category_id: '', price_type: 'fixed', duration_minutes: 30, price: 0, description: '', is_active: true, requires_payment: false, payment_type: 'none', deposit_amount: 0 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -39,6 +39,9 @@ export function ServiceEditModal({
         price: service.price,
         description: service.description || '',
         is_active: service.is_active,
+        requires_payment: (service as any).requires_payment || false,
+        payment_type: (service as any).payment_type || 'none',
+        deposit_amount: (service as any).deposit_amount || 0,
       });
       setImagePreview(service.image_url);
     }
@@ -160,6 +163,33 @@ export function ServiceEditModal({
             <span className="text-xs text-[var(--color-text-muted)]">{uploading ? 'Enviando...' : 'Clique para enviar imagem'}</span>
             <span className="text-[10px] text-[var(--color-text-muted)]">JPG, PNG ou WebP - max 5MB</span>
           </button>
+        )}
+      </div>
+
+      {/* Payment section */}
+      <div className="border-t border-[var(--color-border)] pt-4 mt-2">
+        <label className="flex items-center gap-2 cursor-pointer mb-3">
+          <input type="checkbox" checked={form.requires_payment} onChange={(e) => setForm({ ...form, requires_payment: e.target.checked, payment_type: e.target.checked ? 'full_payment' : 'none' })} className="w-4 h-4 rounded accent-[var(--color-accent)]" />
+          <span className="text-sm font-medium text-[var(--color-text-primary)]">Exigir pagamento para confirmar agendamento</span>
+        </label>
+
+        {form.requires_payment && (
+          <div className="space-y-3 pl-6">
+            <div>
+              <label className={modalLabelClass}>Tipo de pagamento</label>
+              <select className={modalInputClass} value={form.payment_type} onChange={(e) => setForm({ ...form, payment_type: e.target.value })}>
+                <option value="full_payment">Cobrar valor total</option>
+                <option value="deposit">Cobrar sinal</option>
+                <option value="manual">Confirmacao manual</option>
+              </select>
+            </div>
+            {form.payment_type === 'deposit' && (
+              <div>
+                <label className={modalLabelClass}>Valor do sinal (R$)</label>
+                <input type="number" step="0.01" className={modalInputClass} value={form.deposit_amount} onChange={(e) => setForm({ ...form, deposit_amount: Number(e.target.value) })} />
+              </div>
+            )}
+          </div>
         )}
       </div>
 
