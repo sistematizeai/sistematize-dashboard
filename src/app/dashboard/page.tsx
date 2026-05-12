@@ -95,7 +95,7 @@ export default function DashboardPage() {
       setRevenueChart(revenueRes.data);
       setStatusData(statusRes.data);
       setServiceRevenue(svcRevenueRes.data);
-      setRecentClients(clientsRes.data);
+      setRecentClients(Array.isArray(clientsRes.data) ? clientsRes.data : clientsRes.data?.data || []);
       setPeakHours(peakRes.data);
       setDailyAppts(dailyRes.data);
       setPopularServices(popRes.data);
