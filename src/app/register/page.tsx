@@ -6,7 +6,7 @@ export default function RegisterPage() {
   return (
     <main className="flex min-h-screen bg-[var(--color-bg-deep)]">
       {/* Left — Form */}
-      <div className="flex w-full lg:w-[480px] xl:w-[520px] flex-col justify-center px-8 sm:px-12 lg:px-14 py-10 bg-white relative z-10 shadow-[4px_0_24px_rgba(0,0,0,0.04)]">
+      <div className="flex w-full lg:w-[560px] xl:w-[600px] flex-col justify-center px-8 sm:px-12 lg:px-14 py-10 bg-white relative z-10 shadow-[4px_0_24px_rgba(0,0,0,0.04)] overflow-y-auto max-h-screen">
         <RegisterForm />
       </div>
 
