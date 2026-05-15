@@ -5,6 +5,7 @@ import { Modal, modalInputClass, modalLabelClass } from '@/components/ui/modal';
 import { Service } from '@/types';
 import api from '@/lib/api-client';
 import { maskPhone, maskCPF } from '@/lib/masks';
+import { getApiErrorMessage } from '@/lib/errors';
 
 export function CollaboratorFormModal({
   allServices,
@@ -56,8 +57,8 @@ export function CollaboratorFormModal({
 
       onCreated();
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Erro ao criar colaborador. Tente novamente.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao criar colaborador. Tente novamente.'));
     } finally {
       setSaving(false);
     }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/errors';
 
 interface Plan {
   id: string;
@@ -104,8 +105,8 @@ export default function SubscriptionPage() {
       await api.post('/api/subscription/subscribe', { plan_id: planId, billing_cycle: billingCycle });
       setSuccess('Assinatura criada com sucesso! Verifique seu email para o link de pagamento.');
       await loadData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao criar assinatura.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao criar assinatura.'));
     } finally {
       setSubscribing(false);
     }
@@ -119,8 +120,8 @@ export default function SubscriptionPage() {
       await api.put('/api/subscription/upgrade', { plan_id: planId, billing_cycle: billingCycle });
       setSuccess('Plano atualizado com sucesso!');
       await loadData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao atualizar plano.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao atualizar plano.'));
     } finally {
       setUpgrading(false);
     }
@@ -134,8 +135,8 @@ export default function SubscriptionPage() {
       await api.post('/api/subscription/cancel');
       setSuccess('Assinatura cancelada.');
       await loadData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao cancelar assinatura.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao cancelar assinatura.'));
     } finally {
       setCancelling(false);
     }

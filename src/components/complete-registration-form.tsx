@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import api from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/errors';
 
 export function CompleteRegistrationForm() {
   const router = useRouter();
@@ -20,8 +21,8 @@ export function CompleteRegistrationForm() {
       const res = await api.post('/api/auth/complete-registration', form);
       await loginWithToken(res.data.token);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao completar cadastro');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao completar cadastro'));
     } finally {
       setLoading(false);
     }

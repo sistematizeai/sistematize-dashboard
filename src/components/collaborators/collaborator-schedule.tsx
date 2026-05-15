@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CollaboratorSchedule } from '@/types';
 import api from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/errors';
 
 export function CollaboratorScheduleEditor({
   collaboratorId,
@@ -43,8 +44,8 @@ export function CollaboratorScheduleEditor({
       setSchedule(data);
       setMessage('Agenda salva!');
       setTimeout(() => setMessage(''), 2000);
-    } catch (err: any) {
-      setMessage(err?.response?.data?.message || 'Erro ao salvar agenda.');
+    } catch (err: unknown) {
+      setMessage(getApiErrorMessage(err, 'Erro ao salvar agenda.'));
     } finally {
       setSaving(false);
     }

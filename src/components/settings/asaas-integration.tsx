@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/errors';
 
 const card = 'bg-white rounded-2xl border border-[var(--color-border)] p-6';
 const input = 'w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-white text-sm focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)] transition-all';
@@ -52,8 +53,8 @@ export default function AsaasIntegration() {
       setShowConnect(false);
       setApiKey('');
       await loadStatus();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao conectar. Verifique a API Key.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao conectar. Verifique a API Key.'));
     } finally {
       setConnecting(false);
     }
@@ -66,8 +67,8 @@ export default function AsaasIntegration() {
       await api.post('/api/integrations/asaas/test');
       setSuccess('Conexao testada com sucesso!');
       await loadStatus();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Falha no teste de conexao.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Falha no teste de conexao.'));
     } finally {
       setTesting(false);
     }
@@ -80,8 +81,8 @@ export default function AsaasIntegration() {
       await api.delete('/api/integrations/asaas/disconnect');
       setSuccess('Asaas desconectado.');
       await loadStatus();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao desconectar.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao desconectar.'));
     }
   }
 
@@ -91,8 +92,8 @@ export default function AsaasIntegration() {
       await api.post('/api/integrations/asaas/recreate-webhook');
       setSuccess('Webhook recriado com sucesso!');
       await loadStatus();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao recriar webhook.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao recriar webhook.'));
     }
   }
 

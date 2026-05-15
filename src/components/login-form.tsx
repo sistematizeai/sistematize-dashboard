@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/errors';
 
 const inputClass =
   'w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-deep)] px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)] transition-all';
@@ -46,10 +47,8 @@ export function LoginForm() {
       } else {
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      const message = err?.response?.data?.message
-        || err?.message
-        || 'Erro ao fazer login';
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'Erro ao fazer login');
       if (message === 'EMAIL_NOT_CONFIRMED') {
         setEmailNotConfirmed(true);
       } else {
@@ -81,8 +80,8 @@ export function LoginForm() {
       });
       await loginWithToken(res.data.token);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Codigo 2FA invalido');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Codigo 2FA invalido'));
     } finally {
       setLoading(false);
     }

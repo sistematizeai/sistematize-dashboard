@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import api from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/errors';
 import { maskDocument, maskPhone, unmask } from '@/lib/masks';
 
 const inputClass =
@@ -187,8 +188,8 @@ export function RegisterForm() {
       const payload = { ...form, document: unmask(form.document), whatsapp: unmask(form.whatsapp) };
       const res = await api.post('/api/auth/register', payload);
       setConfirmedEmail(res.data.email);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao criar conta. Tente novamente.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao criar conta. Tente novamente.'));
     } finally {
       setLoading(false);
     }

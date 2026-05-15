@@ -6,6 +6,7 @@ import { Collaborator, Service } from '@/types';
 import api from '@/lib/api-client';
 import { CollaboratorScheduleEditor } from './collaborator-schedule';
 import { maskPhone, maskCPF } from '@/lib/masks';
+import { getApiErrorMessage } from '@/lib/errors';
 
 export function CollaboratorEditModal({
   collaborator,
@@ -25,6 +26,7 @@ export function CollaboratorEditModal({
   });
   const [serviceMap, setServiceMap] = useState<Record<string, { enabled: boolean; commission: string }>>({});
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [rightTab, setRightTab] = useState<'services' | 'schedule'>('services');
 
@@ -76,14 +78,12 @@ export function CollaboratorEditModal({
 
       onSaved();
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Erro ao atualizar colaborador. Tente novamente.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao atualizar colaborador. Tente novamente.'));
     } finally {
       setSaving(false);
     }
   };
-
-  const [deleting, setDeleting] = useState(false);
 
   const handleDeactivate = async () => {
     if (!confirm('Desativar este colaborador? Ele nao aparecera mais para agendamentos.')) return;
@@ -92,8 +92,8 @@ export function CollaboratorEditModal({
       await api.put(`/api/collaborators/${collaborator.id}`, { is_active: false });
       onSaved();
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Erro ao desativar colaborador. Tente novamente.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao desativar colaborador. Tente novamente.'));
     } finally {
       setDeleting(false);
     }

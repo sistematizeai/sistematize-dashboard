@@ -11,6 +11,12 @@ const PRICE_TYPES = [
   { value: 'on_request', label: 'Sob consulta' },
 ];
 
+type EditableService = Service & {
+  requires_payment?: boolean;
+  payment_type?: string;
+  deposit_amount?: number;
+};
+
 export function ServiceEditModal({
   service,
   categories,
@@ -39,9 +45,9 @@ export function ServiceEditModal({
         price: service.price,
         description: service.description || '',
         is_active: service.is_active,
-        requires_payment: (service as any).requires_payment || false,
-        payment_type: (service as any).payment_type || 'none',
-        deposit_amount: (service as any).deposit_amount || 0,
+        requires_payment: (service as EditableService).requires_payment || false,
+        payment_type: (service as EditableService).payment_type || 'none',
+        deposit_amount: (service as EditableService).deposit_amount || 0,
       });
       setImagePreview(service.image_url);
     }
