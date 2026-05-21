@@ -14,7 +14,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-const PUBLIC_AUTH_PATHS = ['/login', '/register', '/complete-registration', '/auth/callback', '/blocked'];
+const PUBLIC_AUTH_PATHS = ['/login', '/register', '/complete-registration', '/auth/callback', '/blocked', '/terms', '/privacy'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

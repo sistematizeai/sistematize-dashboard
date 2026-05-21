@@ -28,7 +28,7 @@ const STEPS = [
   { num: 7, label: 'Agenda' },
   { num: 8, label: 'Prioridade' },
   { num: 9, label: 'Interesses' },
-  { num: 10, label: 'Revisao' },
+  { num: 10, label: 'Termos' },
 ];
 
 const SEGMENTS = [
@@ -468,36 +468,18 @@ export function RegisterForm() {
         </div>
       )}
 
-      {/* ===== STEP 10: Revisao ===== */}
+      {/* ===== STEP 10: Termos ===== */}
       {step === 10 && (
         <div className="space-y-4">
-          <div className="bg-[var(--color-bg-surface)] rounded-xl p-4 space-y-3">
-            <ReviewSection title="Conta" items={[
-              ['Nome', form.full_name], ['Email', form.email], ['CPF/CNPJ', form.document],
-            ]} />
-            <div className="h-px bg-[var(--color-border)]" />
-            <ReviewSection title="Negocio" items={[
-              ['Nome', form.business_name], ['Segmento', form.segment],
-              ['Tipo', form.business_type], ['Cidade', `${form.city} - ${form.state}`],
-              ['WhatsApp', form.whatsapp], ...(form.instagram ? [['Instagram', form.instagram] as [string, string]] : []),
-            ]} />
-            <div className="h-px bg-[var(--color-border)]" />
-            <ReviewSection title="Operacao" items={[
-              ['Profissionais', form.professionals_count], ['Agendamentos/mes', form.monthly_appointments_range],
-              ['Metodo atual', form.current_scheduling_method], ['Sistema atual', form.current_system_usage],
-              ['Dificuldade', form.main_difficulty],
-            ]} />
-            <div className="h-px bg-[var(--color-border)]" />
-            <ReviewSection title="Objetivos" items={[
-              ['Objetivo', form.main_goal],
-              ['Pagina online', form.public_booking_page_interest],
-              ['Catalogo digital', form.digital_catalog_interest],
-              ['Contato', form.best_contact_time],
-              ['Faturamento', form.monthly_revenue_range],
-            ]} />
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-4">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
+              Para criar sua conta, aceite os termos da plataforma.
+            </p>
+            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+              Voce pode abrir os documentos em uma nova aba antes de finalizar o cadastro.
+            </p>
           </div>
 
-          {/* Terms */}
           <label className="flex items-start gap-3 cursor-pointer group">
             <input
               type="checkbox"
@@ -548,7 +530,7 @@ export function RegisterForm() {
             Proximo
           </button>
         ) : (
-          <button type="button" onClick={handleSubmit} disabled={!canNext(5) || loading} className={`${btnPrimary} flex-1`}>
+          <button type="button" onClick={handleSubmit} disabled={!canNext(step) || loading} className={`${btnPrimary} flex-1`}>
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -567,22 +549,6 @@ export function RegisterForm() {
             Entre aqui
           </a>
         </p>
-      </div>
-    </div>
-  );
-}
-
-function ReviewSection({ title, items }: { title: string; items: [string, string][] }) {
-  return (
-    <div>
-      <p className="text-xs font-bold text-[var(--color-text-primary)] mb-2 uppercase tracking-wide">{title}</p>
-      <div className="space-y-1">
-        {items.map(([label, value]) => (
-          <div key={label} className="flex justify-between text-xs">
-            <span className="text-[var(--color-text-muted)]">{label}</span>
-            <span className="text-[var(--color-text-primary)] font-medium text-right max-w-[60%] truncate">{value}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
