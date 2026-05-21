@@ -145,9 +145,11 @@ export function StatusConfirmationModal({ pending, onConfirm, onCancel }: Status
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setPaymentMethod('');
-    setReason('');
-    setLoading(false);
+    queueMicrotask(() => {
+      setPaymentMethod('');
+      setReason('');
+      setLoading(false);
+    });
   }, [pending]);
 
   if (!pending) return null;

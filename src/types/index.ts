@@ -63,6 +63,12 @@ export interface Business {
   subscription_status: string;
   trial_ends_at: string;
   plan_id: string | null;
+  available_modules?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    source: 'plan' | 'override';
+  }>;
   is_active: boolean;
   created_at: string;
   updated_at: string;

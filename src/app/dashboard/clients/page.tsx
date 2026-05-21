@@ -57,7 +57,9 @@ export default function ClientsPage() {
 
   useEffect(() => {
     if (!search) {
-      fetchClients('', 1);
+      queueMicrotask(() => {
+        void fetchClients('', 1);
+      });
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);

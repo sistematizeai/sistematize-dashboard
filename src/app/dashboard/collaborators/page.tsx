@@ -32,7 +32,11 @@ export default function CollaboratorsPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchData();
+    });
+  }, []);
 
   if (loading) {
     return (

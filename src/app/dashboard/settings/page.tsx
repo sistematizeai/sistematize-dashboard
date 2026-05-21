@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import api from '@/lib/api-client';
 import { useAuth } from '@/lib/auth';
 import type { Business, BusinessHours, BookingSettings, NotificationSettings } from '@/types';
@@ -196,7 +197,7 @@ export default function SettingsPage() {
   const heroLayout = booking.hero_layout || 'split';
   const showBadges = booking.show_hero_badges ?? true;
 
-  const Preview = () => (
+  const preview = (
     <div className="sticky top-24">
       <div className={`${card} overflow-hidden`}>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-4">Preview da Pagina Publica</p>
@@ -211,7 +212,7 @@ export default function SettingsPage() {
                 <div className="w-[55%] flex flex-col justify-center px-3 py-2" style={{ background: `${form.primary_color}08` }}>
                   <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--color-bg-surface)] mb-1.5 border border-white shadow-sm">
                     {biz?.logo_url
-                      ? <img src={biz.logo_url} alt="" className="w-full h-full object-cover" />
+                      ? <Image src={biz.logo_url} alt="" fill sizes="32px" className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-[var(--color-text-muted)]">{form.name?.charAt(0) || '?'}</div>
                     }
                   </div>
@@ -224,7 +225,7 @@ export default function SettingsPage() {
                   )}
                 </div>
                 <div className="w-[45%] relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${form.primary_color}40, ${form.primary_color}20)` }}>
-                  {biz?.cover_image_url && <img src={biz.cover_image_url} alt="" className="w-full h-full object-cover absolute inset-0" />}
+                  {biz?.cover_image_url && <Image src={biz.cover_image_url} alt="" fill sizes="100px" className="object-cover" />}
                 </div>
               </div>
               {showBadges && (
@@ -241,12 +242,12 @@ export default function SettingsPage() {
           {heroLayout === 'fullcover' && (
             <>
               <div className="h-[130px] relative flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${form.primary_color}, ${form.primary_color}cc)` }}>
-                {biz?.cover_image_url && <img src={biz.cover_image_url} alt="" className="w-full h-full object-cover absolute inset-0" />}
+                {biz?.cover_image_url && <Image src={biz.cover_image_url} alt="" fill sizes="220px" className="object-cover" />}
                 <div className="absolute inset-0 bg-black/30" />
                 <div className="relative z-10 text-center px-3">
                   <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/20 mx-auto mb-1.5 border border-white/30">
                     {biz?.logo_url
-                      ? <img src={biz.logo_url} alt="" className="w-full h-full object-cover" />
+                      ? <Image src={biz.logo_url} alt="" fill sizes="40px" className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white/80">{form.name?.charAt(0) || '?'}</div>
                     }
                   </div>
@@ -272,7 +273,7 @@ export default function SettingsPage() {
               <div className="py-5 px-3 text-center" style={{ background: `linear-gradient(135deg, ${form.primary_color}15, ${form.primary_color}08)` }}>
                 <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white mx-auto mb-2 border border-[var(--color-border)] shadow-sm">
                   {biz?.logo_url
-                    ? <img src={biz.logo_url} alt="" className="w-full h-full object-cover" />
+                    ? <Image src={biz.logo_url} alt="" fill sizes="48px" className="object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-[var(--color-text-muted)]">{form.name?.charAt(0) || '?'}</div>
                   }
                 </div>
@@ -431,7 +432,7 @@ export default function SettingsPage() {
                     >
                       {biz?.logo_url ? (
                         <>
-                          <img src={biz.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                          <Image src={biz.logo_url} alt="Logo" fill sizes="96px" className="object-cover" />
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                           </div>
@@ -631,7 +632,7 @@ export default function SettingsPage() {
 
               {/* Right — Preview */}
               <div className="w-[280px] shrink-0 hidden xl:block">
-                <Preview />
+                {preview}
               </div>
             </div>
           )}
@@ -737,7 +738,7 @@ export default function SettingsPage() {
                       onClick={() => coverRef.current?.click()}>
                       {biz?.cover_image_url ? (
                         <>
-                          <img src={biz.cover_image_url} alt="Capa" className="w-full h-full object-cover" />
+                          <Image src={biz.cover_image_url} alt="Capa" fill sizes="(min-width: 1024px) 480px, 100vw" className="object-cover" />
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             <span className="text-white text-xs font-semibold">Trocar imagem</span>
                           </div>
@@ -849,7 +850,7 @@ export default function SettingsPage() {
 
               {/* Preview */}
               <div className="w-[280px] shrink-0 hidden xl:block">
-                <Preview />
+                {preview}
               </div>
             </div>
           )}

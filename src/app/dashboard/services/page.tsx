@@ -44,7 +44,11 @@ export default function ServicesPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchData();
+    });
+  }, []);
 
   const handleDeleteCategory = async (id: string) => {
     try {

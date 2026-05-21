@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import api from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/errors';
 import { maskDocument, maskPhone, unmask } from '@/lib/masks';
@@ -18,11 +19,16 @@ const btnSecondary =
   'rounded-xl py-3 px-6 text-sm font-semibold text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-surface)] transition-all cursor-pointer';
 
 const STEPS = [
-  { num: 1, label: 'Conta' },
-  { num: 2, label: 'Negocio' },
-  { num: 3, label: 'Operacao' },
-  { num: 4, label: 'Objetivos' },
-  { num: 5, label: 'Revisao' },
+  { num: 1, label: 'Identificacao' },
+  { num: 2, label: 'Seguranca' },
+  { num: 3, label: 'Negocio' },
+  { num: 4, label: 'Perfil' },
+  { num: 5, label: 'Contato' },
+  { num: 6, label: 'Operacao' },
+  { num: 7, label: 'Agenda' },
+  { num: 8, label: 'Prioridade' },
+  { num: 9, label: 'Interesses' },
+  { num: 10, label: 'Revisao' },
 ];
 
 const SEGMENTS = [
@@ -99,7 +105,7 @@ const initial: FormData = {
   full_name: '', email: '', password: '', document: '',
   business_name: '', segment: '', business_type: '', city: '', state: '', whatsapp: '', instagram: '',
   professionals_count: '', monthly_appointments_range: '', current_scheduling_method: '', current_system_usage: '', main_difficulty: '',
-  monthly_revenue_range: '', main_goal: '', whatsapp_automation_interest: '', public_booking_page_interest: '', digital_catalog_interest: '', best_contact_time: '',
+  monthly_revenue_range: '', main_goal: '', whatsapp_automation_interest: 'Nao no momento', public_booking_page_interest: '', digital_catalog_interest: '', best_contact_time: '',
   accepted_terms: false, accepted_marketing: false,
 };
 
@@ -172,11 +178,16 @@ export function RegisterForm() {
 
   const canNext = (s: number) => {
     switch (s) {
-      case 1: return form.full_name.length >= 2 && form.email.includes('@') && unmask(form.document).length >= 11 && passwordValid;
-      case 2: return form.business_name.length >= 2 && form.segment && form.business_type && form.city && form.state && unmask(form.whatsapp).length >= 10;
-      case 3: return form.professionals_count && form.monthly_appointments_range && form.current_scheduling_method && form.current_system_usage && form.main_difficulty;
-      case 4: return form.monthly_revenue_range && form.main_goal && form.whatsapp_automation_interest && form.public_booking_page_interest && form.digital_catalog_interest && form.best_contact_time;
-      case 5: return form.accepted_terms;
+      case 1: return form.full_name.trim().length >= 2 && form.email.includes('@');
+      case 2: return unmask(form.document).length >= 11 && passwordValid;
+      case 3: return form.business_name.trim().length >= 2 && Boolean(form.segment);
+      case 4: return Boolean(form.business_type && form.city.trim() && form.state);
+      case 5: return unmask(form.whatsapp).length >= 10;
+      case 6: return Boolean(form.professionals_count && form.monthly_appointments_range);
+      case 7: return Boolean(form.current_scheduling_method && form.current_system_usage);
+      case 8: return Boolean(form.main_difficulty && form.main_goal);
+      case 9: return Boolean(form.monthly_revenue_range && form.public_booking_page_interest && form.digital_catalog_interest && form.best_contact_time);
+      case 10: return form.accepted_terms;
       default: return false;
     }
   };
@@ -208,7 +219,7 @@ export function RegisterForm() {
     return (
       <div className="w-full max-w-md mx-auto text-center">
         <div className="mb-6">
-          <img src="/logo-sistematize.png" alt="Sistematize" className="h-7 mx-auto" draggable={false} />
+          <Image src="/logo-sistematize.png" alt="Sistematize" width={186} height={40} className="h-7 w-auto mx-auto" draggable={false} />
         </div>
 
         <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[var(--color-green-soft)] flex items-center justify-center">
@@ -245,38 +256,30 @@ export function RegisterForm() {
     <div className="w-full max-w-md mx-auto">
       {/* Logo */}
       <div className="mb-6">
-        <img src="/logo-sistematize.png" alt="Sistematize" className="h-7" draggable={false} />
+        <Image src="/logo-sistematize.png" alt="Sistematize" width={186} height={40} className="h-7 w-auto" draggable={false} />
       </div>
 
       {/* Progress */}
-      <div className="flex items-center gap-1 mb-7">
-        {STEPS.map((s, i) => (
-          <div key={s.num} className="flex items-center flex-1">
-            <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
-              step > s.num
-                ? 'bg-[var(--color-green)] text-white'
-                : step === s.num
-                  ? 'bg-gradient-to-r from-[#4A6CF7] to-[#6C5CE7] text-white'
-                  : 'bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
-            }`}>
-              {step > s.num ? (
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-              ) : s.num}
-            </div>
-            {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-1 rounded-full transition-all ${step > s.num ? 'bg-[var(--color-green)]' : 'bg-[var(--color-border)]'}`} />
-            )}
-          </div>
-        ))}
+      <div className="mb-7">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-[var(--color-accent)]">Etapa {step} de {STEPS.length}</span>
+          <span className="text-xs text-[var(--color-text-muted)]">{Math.round((step / STEPS.length) * 100)}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-[var(--color-bg-surface)] overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#4A6CF7] to-[#6C5CE7] transition-all duration-300"
+            style={{ width: `${(step / STEPS.length) * 100}%` }}
+          />
+        </div>
       </div>
 
       {/* Step title */}
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[var(--color-text-primary)]">{STEPS[step - 1].label}</h1>
-        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Etapa {step} de 5</p>
+        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Preencha só esta parte para continuar.</p>
       </div>
 
-      {/* ===== STEP 1: Conta ===== */}
+      {/* ===== STEP 1: Identificacao ===== */}
       {step === 1 && (
         <div className="space-y-4">
           <div>
@@ -287,6 +290,12 @@ export function RegisterForm() {
             <FieldLabel>Email</FieldLabel>
             <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="seu@email.com" autoComplete="email" className={inputClass} />
           </div>
+        </div>
+      )}
+
+      {/* ===== STEP 2: Seguranca ===== */}
+      {step === 2 && (
+        <div className="space-y-4">
           <div>
             <FieldLabel>CPF ou CNPJ</FieldLabel>
             <input value={form.document} onChange={e => set('document', maskDocument(e.target.value))} placeholder="000.000.000-00" className={inputClass} />
@@ -315,8 +324,8 @@ export function RegisterForm() {
         </div>
       )}
 
-      {/* ===== STEP 2: Negocio ===== */}
-      {step === 2 && (
+      {/* ===== STEP 3: Negocio ===== */}
+      {step === 3 && (
         <div className="space-y-4">
           <div>
             <FieldLabel>Nome do negocio</FieldLabel>
@@ -328,6 +337,12 @@ export function RegisterForm() {
               {SEGMENTS.map(s => <OptionCard key={s} label={s} selected={form.segment === s} onClick={() => set('segment', s)} />)}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ===== STEP 4: Perfil ===== */}
+      {step === 4 && (
+        <div className="space-y-4">
           <div>
             <FieldLabel>Tipo de negocio</FieldLabel>
             <div className="grid grid-cols-2 gap-2">
@@ -350,6 +365,12 @@ export function RegisterForm() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ===== STEP 5: Contato ===== */}
+      {step === 5 && (
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>WhatsApp</FieldLabel>
@@ -363,8 +384,8 @@ export function RegisterForm() {
         </div>
       )}
 
-      {/* ===== STEP 3: Operacao ===== */}
-      {step === 3 && (
+      {/* ===== STEP 6: Operacao ===== */}
+      {step === 6 && (
         <div className="space-y-5">
           <div>
             <FieldLabel>Quantos profissionais?</FieldLabel>
@@ -378,6 +399,12 @@ export function RegisterForm() {
               {APPOINTMENTS_RANGE.map(a => <OptionCard key={a} label={a} selected={form.monthly_appointments_range === a} onClick={() => set('monthly_appointments_range', a)} />)}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ===== STEP 7: Agenda ===== */}
+      {step === 7 && (
+        <div className="space-y-5">
           <div>
             <FieldLabel>Como agenda hoje?</FieldLabel>
             <div className="grid grid-cols-2 gap-2">
@@ -390,22 +417,16 @@ export function RegisterForm() {
               {SYSTEM_USAGE.map(u => <OptionCard key={u} label={u} selected={form.current_system_usage === u} onClick={() => set('current_system_usage', u)} />)}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ===== STEP 8: Prioridade ===== */}
+      {step === 8 && (
+        <div className="space-y-5">
           <div>
             <FieldLabel>Maior dificuldade</FieldLabel>
             <div className="grid grid-cols-2 gap-2">
               {DIFFICULTIES.map(d => <OptionCard key={d} label={d} selected={form.main_difficulty === d} onClick={() => set('main_difficulty', d)} />)}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===== STEP 4: Objetivos ===== */}
-      {step === 4 && (
-        <div className="space-y-5">
-          <div>
-            <FieldLabel>Faturamento mensal</FieldLabel>
-            <div className="grid grid-cols-2 gap-2">
-              {REVENUE_RANGES.map(r => <OptionCard key={r} label={r} selected={form.monthly_revenue_range === r} onClick={() => set('monthly_revenue_range', r)} />)}
             </div>
           </div>
           <div>
@@ -414,10 +435,16 @@ export function RegisterForm() {
               {GOALS.map(g => <OptionCard key={g} label={g} selected={form.main_goal === g} onClick={() => set('main_goal', g)} />)}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ===== STEP 9: Interesses ===== */}
+      {step === 9 && (
+        <div className="space-y-4">
           <div>
-            <FieldLabel>Interesse em automacao WhatsApp</FieldLabel>
-            <div className="space-y-2">
-              {INTEREST_LEVELS.map(l => <OptionCard key={l} label={l} selected={form.whatsapp_automation_interest === l} onClick={() => set('whatsapp_automation_interest', l)} />)}
+            <FieldLabel>Faturamento mensal</FieldLabel>
+            <div className="grid grid-cols-2 gap-2">
+              {REVENUE_RANGES.map(r => <OptionCard key={r} label={r} selected={form.monthly_revenue_range === r} onClick={() => set('monthly_revenue_range', r)} />)}
             </div>
           </div>
           <div>
@@ -441,8 +468,8 @@ export function RegisterForm() {
         </div>
       )}
 
-      {/* ===== STEP 5: Revisao ===== */}
-      {step === 5 && (
+      {/* ===== STEP 10: Revisao ===== */}
+      {step === 10 && (
         <div className="space-y-4">
           <div className="bg-[var(--color-bg-surface)] rounded-xl p-4 space-y-3">
             <ReviewSection title="Conta" items={[
@@ -462,11 +489,11 @@ export function RegisterForm() {
             ]} />
             <div className="h-px bg-[var(--color-border)]" />
             <ReviewSection title="Objetivos" items={[
-              ['Faturamento', form.monthly_revenue_range], ['Objetivo', form.main_goal],
-              ['Automacao WhatsApp', form.whatsapp_automation_interest],
+              ['Objetivo', form.main_goal],
               ['Pagina online', form.public_booking_page_interest],
               ['Catalogo digital', form.digital_catalog_interest],
               ['Contato', form.best_contact_time],
+              ['Faturamento', form.monthly_revenue_range],
             ]} />
           </div>
 
@@ -516,7 +543,7 @@ export function RegisterForm() {
           </button>
         )}
         <div className="flex-1" />
-        {step < 5 ? (
+        {step < STEPS.length ? (
           <button type="button" onClick={() => { setStep(step + 1); setError(''); }} disabled={!canNext(step)} className={btnPrimary}>
             Proximo
           </button>

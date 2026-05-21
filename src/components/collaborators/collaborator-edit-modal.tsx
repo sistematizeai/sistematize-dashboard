@@ -32,26 +32,28 @@ export function CollaboratorEditModal({
 
   useEffect(() => {
     if (!collaborator) return;
-    setForm({
-      name: collaborator.name,
-      phone: collaborator.phone || '',
-      email: collaborator.email || '',
-      cpf: collaborator.cpf || '',
-      birth_date: collaborator.birth_date || '',
-      base_commission: collaborator.base_commission,
-      work_start: collaborator.work_start?.slice(0, 5) || '08:00',
-      work_end: collaborator.work_end?.slice(0, 5) || '18:00',
-      address: collaborator.address || '',
-      notes: collaborator.notes || '',
-      is_active: collaborator.is_active,
-    });
+    queueMicrotask(() => {
+      setForm({
+        name: collaborator.name,
+        phone: collaborator.phone || '',
+        email: collaborator.email || '',
+        cpf: collaborator.cpf || '',
+        birth_date: collaborator.birth_date || '',
+        base_commission: collaborator.base_commission,
+        work_start: collaborator.work_start?.slice(0, 5) || '08:00',
+        work_end: collaborator.work_end?.slice(0, 5) || '18:00',
+        address: collaborator.address || '',
+        notes: collaborator.notes || '',
+        is_active: collaborator.is_active,
+      });
 
-    const map: Record<string, { enabled: boolean; commission: string }> = {};
-    allServices.forEach((s) => {
-      const match = collaborator.collaborator_services?.find((entry) => entry.service_id === s.id);
-      map[s.id] = { enabled: !!match, commission: match?.commission?.toString() || '' };
+      const map: Record<string, { enabled: boolean; commission: string }> = {};
+      allServices.forEach((s) => {
+        const match = collaborator.collaborator_services?.find((entry) => entry.service_id === s.id);
+        map[s.id] = { enabled: !!match, commission: match?.commission?.toString() || '' };
+      });
+      setServiceMap(map);
     });
-    setServiceMap(map);
   }, [collaborator, allServices]);
 
   if (!collaborator) return null;

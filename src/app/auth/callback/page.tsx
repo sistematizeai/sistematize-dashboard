@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import api from '@/lib/api-client';
 
 function CallbackContent() {
@@ -12,8 +13,10 @@ function CallbackContent() {
   useEffect(() => {
     const token = searchParams.get('token');
     if (!token) {
-      setStatus('error');
-      setErrorMsg('Link de confirmacao invalido.');
+      queueMicrotask(() => {
+        setStatus('error');
+        setErrorMsg('Link de confirmacao invalido.');
+      });
       return;
     }
 
@@ -28,7 +31,7 @@ function CallbackContent() {
   return (
     <div className="w-full max-w-sm bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-8 text-center">
       <div className="mb-6">
-        <img src="/logo-sistematize.png" alt="Sistematize" className="h-7 mx-auto" draggable={false} />
+        <Image src="/logo-sistematize.png" alt="Sistematize" width={186} height={40} className="h-7 w-auto mx-auto" draggable={false} />
       </div>
 
       {status === 'loading' && (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import api from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/errors';
 
@@ -29,7 +30,7 @@ export function LoginForm() {
   const [resendSent, setResendSent] = useState(false);
 
   useEffect(() => {
-    setHydrated(true);
+    queueMicrotask(() => setHydrated(true));
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -74,11 +75,11 @@ export function LoginForm() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/api/auth/verify-2fa', {
+      await api.post('/api/auth/verify-2fa', {
         temp_token: tempToken,
         totp_code: totpCode,
       });
-      await loginWithToken(res.data.token);
+      await loginWithToken();
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Codigo 2FA invalido'));
@@ -91,7 +92,7 @@ export function LoginForm() {
     return (
       <div className="w-full max-w-sm mx-auto">
         <div className="mb-8">
-          <img src="/logo-sistematize.png" alt="Sistematize" className="h-7 mb-10" draggable={false} />
+          <Image src="/logo-sistematize.png" alt="Sistematize" width={186} height={40} className="h-7 w-auto mb-10" draggable={false} />
           <div className="w-12 h-12 rounded-2xl bg-[var(--color-accent-soft)] flex items-center justify-center mb-5">
             <svg className="w-6 h-6 stroke-[var(--color-accent)] fill-none" viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -154,7 +155,7 @@ export function LoginForm() {
     <div className="w-full max-w-sm mx-auto">
       {/* Logo */}
       <div className="mb-10">
-        <img src="/logo-sistematize.png" alt="Sistematize" className="h-7" draggable={false} />
+        <Image src="/logo-sistematize.png" alt="Sistematize" width={186} height={40} className="h-7 w-auto" draggable={false} />
       </div>
 
       {/* Heading */}

@@ -18,8 +18,8 @@ export function CompleteRegistrationForm() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/api/auth/complete-registration', form);
-      await loginWithToken(res.data.token);
+      await api.post('/api/auth/complete-registration', form);
+      await loginWithToken();
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Erro ao completar cadastro'));

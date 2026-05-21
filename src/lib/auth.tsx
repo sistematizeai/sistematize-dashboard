@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<{ requires_2fa?: boolean; temp_token?: string; blocked?: boolean }>;
-  loginWithToken: (newToken: string) => Promise<void>;
+  loginWithToken: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -20,23 +20,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadProfile = async () => {
+    const profileRes = await api.get('/api/profiles/me');
+    setToken('cookie-session');
+    setUser(profileRes.data);
+  };
+
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      document.cookie = 'token=' + savedToken + '; path=/; max-age=86400; SameSite=Lax';
-      setToken(savedToken);
-      api.get('/api/profiles/me')
-        .then((res) => setUser(res.data))
+    queueMicrotask(() => {
+      loadProfile()
         .catch(() => {
-          localStorage.removeItem('token');
-          document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
           setToken(null);
+          setUser(null);
         })
         .finally(() => setIsLoading(false));
-    } else {
-      document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
-      setIsLoading(false);
-    }
+    });
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -47,25 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (res.data.blocked) {
       return { blocked: true };
     }
-    localStorage.setItem('token', res.data.token);
-    document.cookie = 'token=' + res.data.token + '; path=/; max-age=86400; SameSite=Lax';
-    setToken(res.data.token);
-    const profileRes = await api.get('/api/profiles/me');
-    setUser(profileRes.data);
+    await loadProfile();
     return {};
   };
 
-  const loginWithToken = async (newToken: string) => {
-    localStorage.setItem('token', newToken);
-    document.cookie = 'token=' + newToken + '; path=/; max-age=86400; SameSite=Lax';
-    setToken(newToken);
-    const profileRes = await api.get('/api/profiles/me');
-    setUser(profileRes.data);
+  const loginWithToken = async () => {
+    await loadProfile();
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
+    void api.post('/api/auth/logout').catch(() => undefined);
     setToken(null);
     setUser(null);
   };

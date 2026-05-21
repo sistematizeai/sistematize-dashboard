@@ -144,7 +144,7 @@ export default function AppointmentsPage() {
   // Handle ?modal=new-appointment from dashboard
   useEffect(() => {
     if (searchParams.get('modal') === 'new-appointment') {
-      setShowNewForm(true);
+      queueMicrotask(() => setShowNewForm(true));
       router.replace('/dashboard/appointments', { scroll: false });
     }
   }, [searchParams, router]);
@@ -181,7 +181,9 @@ export default function AppointmentsPage() {
   }, [date, filters, viewMode]);
 
   useEffect(() => {
-    fetchAppointments();
+    queueMicrotask(() => {
+      void fetchAppointments();
+    });
   }, [fetchAppointments]);
 
   useEffect(() => {

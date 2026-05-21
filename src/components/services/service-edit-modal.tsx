@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Modal, modalInputClass, modalLabelClass } from '@/components/ui/modal';
 import { Category, Service } from '@/types';
 import api from '@/lib/api-client';
@@ -37,19 +38,21 @@ export function ServiceEditModal({
 
   useEffect(() => {
     if (service) {
-      setForm({
-        name: service.name,
-        category_id: service.category_id,
-        price_type: service.price_type,
-        duration_minutes: service.duration_minutes,
-        price: service.price,
-        description: service.description || '',
-        is_active: service.is_active,
-        requires_payment: (service as EditableService).requires_payment || false,
-        payment_type: (service as EditableService).payment_type || 'none',
-        deposit_amount: (service as EditableService).deposit_amount || 0,
+      queueMicrotask(() => {
+        setForm({
+          name: service.name,
+          category_id: service.category_id,
+          price_type: service.price_type,
+          duration_minutes: service.duration_minutes,
+          price: service.price,
+          description: service.description || '',
+          is_active: service.is_active,
+          requires_payment: (service as EditableService).requires_payment || false,
+          payment_type: (service as EditableService).payment_type || 'none',
+          deposit_amount: (service as EditableService).deposit_amount || 0,
+        });
+        setImagePreview(service.image_url);
       });
-      setImagePreview(service.image_url);
     }
   }, [service]);
 
@@ -156,7 +159,7 @@ export function ServiceEditModal({
         <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }} />
         {imagePreview ? (
           <div className="relative group w-full h-36 rounded-xl overflow-hidden border border-[var(--color-border)]">
-            <img src={imagePreview} alt={form.name} className="w-full h-full object-cover" />
+            <Image src={imagePreview} alt={form.name} fill sizes="(min-width: 640px) 480px, 100vw" className="object-cover" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
               <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="px-3 py-1.5 rounded-lg bg-white text-xs font-medium text-[var(--color-text-primary)] hover:bg-gray-100 transition-all cursor-pointer">
                 {uploading ? 'Enviando...' : 'Trocar'}

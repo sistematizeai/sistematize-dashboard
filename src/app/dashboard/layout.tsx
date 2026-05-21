@@ -2,24 +2,50 @@
 
 import { AuthGuard } from '@/components/auth-guard';
 import { TrialGuard } from '@/components/trial-guard';
-import { useAuth } from '@/lib/auth';
+import api from '@/lib/api-client';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '@/components/ui/logo';
+import { useEffect, useMemo, useState } from 'react';
+import type { Business } from '@/types';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
-  { label: 'Servicos', path: '/dashboard/services', icon: 'clipboard' },
-  { label: 'Colaboradores', path: '/dashboard/collaborators', icon: 'users' },
-  { label: 'Agenda', path: '/dashboard/appointments', icon: 'calendar' },
+  { label: 'Servicos', path: '/dashboard/services', icon: 'clipboard', moduleSlug: 'services' },
+  { label: 'Colaboradores', path: '/dashboard/collaborators', icon: 'users', moduleSlug: 'collaborators' },
+  { label: 'Agenda', path: '/dashboard/appointments', icon: 'calendar', moduleSlug: 'appointments' },
   { label: 'Clientes', path: '/dashboard/clients', icon: 'user' },
-  { label: 'Financeiro', path: '/dashboard/financial', icon: 'dollar' },
+  { label: 'Financeiro', path: '/dashboard/financial', icon: 'dollar', moduleSlug: 'financial' },
   { label: 'Assinatura', path: '/dashboard/subscription', icon: 'crown' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [business, setBusiness] = useState<Business | null>(null);
+
+  useEffect(() => {
+    api.get('/api/businesses/me')
+      .then((res) => setBusiness(res.data))
+      .catch(() => setBusiness(null));
+  }, []);
+
+  const availableModuleSlugs = useMemo(
+    () => new Set((business?.available_modules || []).map(module => module.slug)),
+    [business?.available_modules],
+  );
+
+  const visibleNavItems = useMemo(() => {
+    if (!business) return NAV_ITEMS;
+    return NAV_ITEMS.filter(item => !item.moduleSlug || availableModuleSlugs.has(item.moduleSlug));
+  }, [availableModuleSlugs, business]);
+
+  useEffect(() => {
+    if (!business) return;
+    const currentItem = NAV_ITEMS.find(item => item.moduleSlug && pathname.startsWith(item.path));
+    if (currentItem?.moduleSlug && !availableModuleSlugs.has(currentItem.moduleSlug)) {
+      router.replace('/dashboard/subscription');
+    }
+  }, [availableModuleSlugs, business, pathname, router]);
 
   return (
     <AuthGuard>
@@ -32,7 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             <nav className="flex items-center justify-center gap-1">
-              {NAV_ITEMS.map(item => {
+              {visibleNavItems.map(item => {
                 const isActive = item.path === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.path);
                 return (
                   <button

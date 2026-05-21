@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Service } from '@/types';
 import { Badge } from '@/components/ui/badge';
 
@@ -18,10 +19,12 @@ export function ServiceCard({ service, onClick, onQuickAction }: {
       {/* 16:9 Image area */}
       <div className="w-full aspect-[16/9] relative overflow-hidden">
         {service.image_url ? (
-          <img
+          <Image
             src={service.image_url}
             alt={service.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-[var(--color-bg-surface)] to-[var(--color-border)] flex items-center justify-center">
