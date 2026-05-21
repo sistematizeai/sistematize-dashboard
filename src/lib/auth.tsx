@@ -14,6 +14,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const PUBLIC_AUTH_PATHS = ['/login', '/register', '/complete-registration', '/auth/callback', '/blocked'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -27,6 +28,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      setToken(null);
+      setUser(null);
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    if (PUBLIC_AUTH_PATHS.includes(window.location.pathname)) {
+      queueMicrotask(() => setIsLoading(false));
+      return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    }
+
     queueMicrotask(() => {
       loadProfile()
         .catch(() => {
@@ -36,11 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .finally(() => setIsLoading(false));
     });
 
-    const handleUnauthorized = () => {
-      setToken(null);
-      setUser(null);
-    };
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
