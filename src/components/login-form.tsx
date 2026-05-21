@@ -62,10 +62,14 @@ export function LoginForm() {
 
   const handleResendConfirmation = async () => {
     setResendLoading(true);
+    setError('');
     try {
       await api.post('/api/auth/resend-confirmation', { email });
       setResendSent(true);
-    } catch { /* silent */ } finally {
+    } catch (err: unknown) {
+      setResendSent(false);
+      setError(getApiErrorMessage(err, 'Nao foi possivel reenviar o email de confirmacao.'));
+    } finally {
       setResendLoading(false);
     }
   };

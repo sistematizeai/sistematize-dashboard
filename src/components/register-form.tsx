@@ -208,9 +208,12 @@ export function RegisterForm() {
 
   const handleResend = async () => {
     setLoading(true);
+    setError('');
     try {
       await api.post('/api/auth/resend-confirmation', { email: confirmedEmail });
-    } catch { /* silent */ } finally {
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Nao foi possivel reenviar o email de confirmacao.'));
+    } finally {
       setLoading(false);
     }
   };
@@ -240,6 +243,15 @@ export function RegisterForm() {
             O link expira em 24 horas.
           </p>
         </div>
+
+        {error && (
+          <div className="flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-[var(--color-rose-soft)] border border-red-100 mb-4 text-left">
+            <svg className="w-4 h-4 stroke-[var(--color-rose)] flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p className="text-xs text-[var(--color-rose)] font-medium">{error}</p>
+          </div>
+        )}
 
         <button onClick={handleResend} disabled={loading} className={`${btnSecondary} w-full mb-4`}>
           {loading ? 'Reenviando...' : 'Reenviar email'}
