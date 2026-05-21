@@ -36,6 +36,10 @@ interface Invoice {
   invoice_url: string | null;
 }
 
+interface SubscribeResponse {
+  payment_url?: string | null;
+}
+
 const card = 'bg-white rounded-2xl border border-[var(--color-border)] p-6';
 
 function formatCurrency(v: number) {
@@ -77,6 +81,7 @@ export default function SubscriptionPage() {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -102,11 +107,30 @@ export default function SubscriptionPage() {
     setSubscribing(true);
     setError('');
     setSuccess('');
+    setPaymentUrl(null);
+    const paymentWindow = window.open('', '_blank', 'noopener,noreferrer');
     try {
-      await api.post('/api/subscription/subscribe', { plan_id: planId, billing_cycle: billingCycle });
-      setSuccess('Assinatura criada com sucesso! Verifique seu email para o link de pagamento.');
+      const response = await api.post<SubscribeResponse>('/api/subscription/subscribe', {
+        plan_id: planId,
+        billing_cycle: billingCycle,
+        billing_type: 'UNDEFINED',
+      });
+      const url = response.data?.payment_url || null;
+      if (url) {
+        setPaymentUrl(url);
+        if (paymentWindow) {
+          paymentWindow.location.href = url;
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        setSuccess('Assinatura criada. Abrimos a pagina segura do Asaas para concluir o pagamento.');
+      } else {
+        paymentWindow?.close();
+        setSuccess('Assinatura criada. A cobranca sera exibida em instantes na lista de faturas.');
+      }
       await loadData();
     } catch (err: unknown) {
+      paymentWindow?.close();
       setError(getApiErrorMessage(err, 'Erro ao criar assinatura.'));
     } finally {
       setSubscribing(false);
@@ -171,9 +195,21 @@ export default function SubscriptionPage() {
         </div>
       )}
       {success && (
-        <div className="mb-6 p-4 rounded-xl bg-[var(--color-green-soft)] border border-[var(--color-green)]/20 text-sm text-[var(--color-green)] font-medium flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
-          {success}
+        <div className="mb-6 p-4 rounded-xl bg-[var(--color-green-soft)] border border-[var(--color-green)]/20 text-sm text-[var(--color-green)] font-medium flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>{success}</span>
+          </div>
+          {paymentUrl && (
+            <a
+              href={paymentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--color-green)] px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-110"
+            >
+              Abrir pagamento
+            </a>
+          )}
         </div>
       )}
       {subscription?.status === 'overdue' && (
