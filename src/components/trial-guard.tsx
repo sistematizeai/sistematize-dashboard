@@ -48,7 +48,7 @@ export function TrialGuard({ children }: { children: React.ReactNode }) {
               ? 'Seu periodo de teste expira amanha! Assine para continuar usando.'
               : `Seu periodo de teste expira em ${trialInfo.daysLeft} dias. Assine para nao perder acesso.`
           }
-          <a href="/dashboard/settings" className="ml-2 underline font-semibold hover:no-underline">
+          <a href="/dashboard/subscription" className="ml-2 underline font-semibold hover:no-underline">
             Ver planos
           </a>
         </div>
