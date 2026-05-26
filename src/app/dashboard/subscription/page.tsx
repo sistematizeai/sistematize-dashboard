@@ -141,10 +141,6 @@ export default function SubscriptionPage() {
     setError('');
     setSuccess('');
     setPaymentUrl(null);
-    const targetPlan = plans.find(plan => plan.id === planId);
-    const targetPrice = targetPlan ? (billingCycle === 'yearly' ? targetPlan.price_yearly : targetPlan.price_monthly) : 0;
-    const requiresImmediatePayment = Boolean(subscription && Number(targetPrice) > Number(subscription.value));
-    const paymentWindow = requiresImmediatePayment ? window.open('', '_blank', 'noopener,noreferrer') : null;
     try {
       const response = await api.post<SubscribeResponse>('/api/subscription/subscribe', {
         plan_id: planId,
@@ -154,19 +150,13 @@ export default function SubscriptionPage() {
       const url = response.data?.payment_url || null;
       if (url) {
         setPaymentUrl(url);
-        if (paymentWindow) {
-          paymentWindow.location.href = url;
-        } else {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
+        window.open(url, '_blank', 'noopener,noreferrer');
         setSuccess('Assinatura criada. Abrimos o checkout seguro do Asaas em uma nova aba para concluir o pagamento.');
       } else {
-        paymentWindow?.close();
         setSuccess('Assinatura criada. Assim que o Asaas retornar a fatura, o botao de pagamento aparecera na lista abaixo.');
       }
       await loadData();
     } catch (err: unknown) {
-      paymentWindow?.close();
       setError(getApiErrorMessage(err, 'Erro ao criar assinatura.'));
     } finally {
       setSubscribing(false);
@@ -178,7 +168,6 @@ export default function SubscriptionPage() {
     setError('');
     setSuccess('');
     setPaymentUrl(null);
-    const paymentWindow = window.open('', '_blank', 'noopener,noreferrer');
     try {
       const response = await api.put<SubscribeResponse>('/api/subscription/upgrade', {
         plan_id: planId,
@@ -188,14 +177,9 @@ export default function SubscriptionPage() {
       const url = response.data?.payment_url || null;
       if (url) {
         setPaymentUrl(url);
-        if (paymentWindow) {
-          paymentWindow.location.href = url;
-        } else {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        }
+        window.open(url, '_blank', 'noopener,noreferrer');
         setSuccess('Geramos a cobranca de upgrade. O plano muda somente depois da confirmacao do pagamento no Asaas.');
       } else {
-        paymentWindow?.close();
         const effectiveAt = response.data?.effective_at
           ? new Date(response.data.effective_at).toLocaleDateString('pt-BR')
           : 'na proxima cobranca';
@@ -203,7 +187,6 @@ export default function SubscriptionPage() {
       }
       await loadData();
     } catch (err: unknown) {
-      paymentWindow?.close();
       setError(getApiErrorMessage(err, 'Erro ao atualizar plano.'));
     } finally {
       setUpgrading(false);
