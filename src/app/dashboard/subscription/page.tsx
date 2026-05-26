@@ -60,16 +60,22 @@ function StatusBadge({ status }: { status: string }) {
     paid: 'bg-[var(--color-green-soft)] text-[var(--color-green)]',
     trial: 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]',
     overdue: 'bg-[var(--color-rose-soft)] text-[var(--color-rose)]',
+    past_due: 'bg-[var(--color-rose-soft)] text-[var(--color-rose)]',
     cancelled: 'bg-gray-100 text-gray-500',
+    pending_payment: 'bg-amber-50 text-amber-700',
     pending: 'bg-amber-50 text-amber-700',
     confirmed: 'bg-[var(--color-green-soft)] text-[var(--color-green)]',
     received: 'bg-[var(--color-green-soft)] text-[var(--color-green)]',
+    cancel_at_period_end: 'bg-amber-50 text-amber-700',
     blocked: 'bg-[var(--color-rose-soft)] text-[var(--color-rose)]',
   };
   const labels: Record<string, string> = {
     active: 'Ativa', paid: 'Paga', trial: 'Trial', overdue: 'Atrasada',
     cancelled: 'Cancelada', pending: 'Pendente', confirmed: 'Confirmado', received: 'Recebido',
     refunded: 'Reembolsado', deleted: 'Excluido', blocked: 'Bloqueada',
+    pending_payment: 'Aguardando pagamento',
+    past_due: 'Atrasada',
+    cancel_at_period_end: 'Cancela no fim do ciclo',
   };
   return (
     <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${styles[status] || 'bg-gray-100 text-gray-500'}`}>
@@ -267,6 +273,19 @@ export default function SubscriptionPage() {
               Pagar agora
             </a>
           )}
+        </div>
+      )}
+      {subscription?.status === 'pending_payment' && payableInvoice && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800 font-medium flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span>Sua assinatura foi criada e esta aguardando pagamento. O plano sera liberado depois da confirmacao.</span>
+          <a
+            href={`/dashboard/checkout/${payableInvoice.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-110"
+          >
+            Concluir pagamento
+          </a>
         </div>
       )}
 
