@@ -46,6 +46,12 @@ interface CheckoutData {
   payment_methods?: PaymentMethod[];
   default_payment_method?: PaymentMethod | null;
   asaas_fallback_url: string | null;
+  payment_capabilities?: {
+    pix: boolean;
+    boleto: boolean;
+    card_tokenization: boolean;
+    hosted_card: boolean;
+  };
 }
 
 const fieldClass = 'w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-3 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10';
@@ -128,9 +134,16 @@ export default function CheckoutPage() {
     try {
       const response = await api.get<CheckoutData>(`/api/subscription/checkout/${invoiceId}`);
       setData(response.data);
-      if (!response.data.invoice.pix_payload && response.data.invoice.bank_slip_url) {
-        setMode('boleto');
-      }
+      setMode(current => {
+        const cardTokenizationEnabled = response.data.payment_capabilities?.card_tokenization !== false;
+        if (!cardTokenizationEnabled && ['card', 'saved_card'].includes(current)) {
+          return response.data.invoice.pix_payload ? 'pix' : 'boleto';
+        }
+        if (!response.data.invoice.pix_payload && response.data.invoice.bank_slip_url && current === 'pix') {
+          return 'boleto';
+        }
+        return current;
+      });
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Erro ao carregar checkout.'));
     } finally {
@@ -189,7 +202,11 @@ export default function CheckoutPage() {
         : 'Pagamento enviado. Assim que a Asaas confirmar, atualizaremos seu plano.');
       await loadCheckout();
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Nao foi possivel processar o cartao.'));
+      const message = getApiErrorMessage(err, 'Nao foi possivel processar o cartao.');
+      setError(message);
+      if (message.toLowerCase().includes('tokenizacao') || message.toLowerCase().includes('cartao ainda nao esta habilitado')) {
+        setMode(data?.invoice.pix_payload ? 'pix' : 'boleto');
+      }
     } finally {
       setPaying(false);
     }
@@ -222,6 +239,14 @@ export default function CheckoutPage() {
 
   const invoice = data?.invoice;
   const defaultPaymentMethod = data?.default_payment_method || null;
+  const cardTokenizationEnabled = data?.payment_capabilities?.card_tokenization !== false;
+  const checkoutModes: CheckoutMode[] = [
+    'pix',
+    ...(defaultPaymentMethod && cardTokenizationEnabled ? ['saved_card' as CheckoutMode] : []),
+    ...(cardTokenizationEnabled ? ['card' as CheckoutMode] : []),
+    'boleto',
+  ];
+  const modeGridClass = checkoutModes.length === 4 ? 'grid-cols-4' : checkoutModes.length === 3 ? 'grid-cols-3' : 'grid-cols-2';
 
   if (!invoice) {
     return (
@@ -244,7 +269,11 @@ export default function CheckoutPage() {
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">Checkout seguro</p>
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Finalizar pagamento</h1>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">Pagamento processado pela Asaas com tokenizacao de cartao.</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            {cardTokenizationEnabled
+              ? 'Pagamento processado pela Asaas com tokenizacao de cartao.'
+              : 'Pagamento processado pela Asaas. Pix e boleto ficam disponiveis enquanto a tokenizacao de cartao e liberada.'}
+          </p>
         </div>
         <button
           onClick={() => router.push('/dashboard/subscription')}
@@ -304,8 +333,8 @@ export default function CheckoutPage() {
         </section>
 
         <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6">
-          <div className={`mb-5 grid ${defaultPaymentMethod ? 'grid-cols-4' : 'grid-cols-3'} rounded-xl bg-[var(--color-bg-surface)] p-1`}>
-            {(['pix', ...(defaultPaymentMethod ? ['saved_card' as CheckoutMode] : []), 'card', 'boleto'] as CheckoutMode[]).map(item => (
+          <div className={`mb-5 grid ${modeGridClass} rounded-xl bg-[var(--color-bg-surface)] p-1`}>
+            {checkoutModes.map(item => (
               <button
                 key={item}
                 onClick={() => setMode(item)}
@@ -319,6 +348,26 @@ export default function CheckoutPage() {
               </button>
             ))}
           </div>
+
+          {!cardTokenizationEnabled && (
+            <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              <p className="font-bold">Cartao direto em ativacao no Asaas</p>
+              <p className="mt-1">
+                A digitacao de cartao dentro da Sistematize depende da liberacao de tokenizacao na conta Asaas.
+                Enquanto isso, conclua por Pix, boleto ou pela pagina segura do Asaas.
+              </p>
+              {data?.asaas_fallback_url && (
+                <a
+                  href={data.asaas_fallback_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:brightness-110"
+                >
+                  Abrir pagina segura Asaas
+                </a>
+              )}
+            </div>
+          )}
 
           {mode === 'pix' && (
             <div>
@@ -379,7 +428,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {mode === 'saved_card' && defaultPaymentMethod && (
+          {mode === 'saved_card' && defaultPaymentMethod && cardTokenizationEnabled && (
             <div>
               <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Pagar com cartao salvo</h2>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
@@ -414,7 +463,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {mode === 'card' && (
+          {mode === 'card' && cardTokenizationEnabled && (
             <form onSubmit={submitCard}>
               <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Pagar com cartao</h2>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">O cartao sera tokenizado no Asaas antes da cobranca.</p>
