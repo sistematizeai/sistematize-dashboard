@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/errors';
+import { maskDocument, maskPhone, unmask } from '@/lib/masks';
 
 type CheckoutMode = 'pix' | 'card' | 'boleto';
 
@@ -37,6 +38,24 @@ interface CheckoutData {
 
 const fieldClass = 'w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-3 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10';
 const labelClass = 'mb-1.5 block text-xs font-semibold text-[var(--color-text-secondary)]';
+
+function maskCardNumber(value: string) {
+  return value.replace(/\D/g, '').slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+}
+
+function maskTwoDigits(value: string) {
+  return value.replace(/\D/g, '').slice(0, 2);
+}
+
+function maskFourDigits(value: string) {
+  return value.replace(/\D/g, '').slice(0, 4);
+}
+
+function maskPostalCode(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 5) return digits;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
@@ -139,7 +158,7 @@ export default function CheckoutPage() {
       const response = await api.post(`/api/subscription/checkout/${invoiceId}/pay-card`, {
         credit_card: {
           holder_name: form.holder_name,
-          number: form.number.replace(/\D/g, ''),
+          number: unmask(form.number),
           expiry_month: form.expiry_month,
           expiry_year: form.expiry_year,
           ccv: form.ccv,
@@ -147,10 +166,10 @@ export default function CheckoutPage() {
         holder_info: {
           name: form.name,
           email: form.email,
-          cpf_cnpj: form.cpf_cnpj,
-          postal_code: form.postal_code,
+          cpf_cnpj: unmask(form.cpf_cnpj),
+          postal_code: unmask(form.postal_code),
           address_number: form.address_number,
-          phone: form.phone || undefined,
+          phone: form.phone ? unmask(form.phone) : undefined,
         },
       });
       setSuccess(response.data?.paid
@@ -242,8 +261,8 @@ export default function CheckoutPage() {
           <div className="mt-5 rounded-xl border border-[var(--color-border)] p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Seguranca</p>
             <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-              Os dados do cartao sao enviados ao backend somente para gerar o token seguro da Asaas.
-              A Sistematize salva apenas token, bandeira e ultimos digitos.
+              O cartao e tokenizado no Asaas no momento do pagamento. A Sistematize nao salva numero completo nem CVV,
+              apenas o token retornado, bandeira e ultimos digitos para futuras tentativas seguras.
             </p>
           </div>
 
@@ -335,27 +354,49 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Pagar com cartao</h2>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">O cartao sera tokenizado no Asaas antes da cobranca.</p>
 
+              <div className="mt-5 rounded-2xl bg-gradient-to-br from-[#07133B] via-[#2431A8] to-[#6C5CE7] p-5 text-white shadow-lg">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-white/65">Sistematize Card</p>
+                    <p className="mt-6 font-mono text-lg">
+                      {form.number ? maskCardNumber(form.number).padEnd(19, '*') : '**** **** **** ****'}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">Tokenizado</span>
+                </div>
+                <div className="mt-6 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase text-white/55">Titular</p>
+                    <p className="mt-1 text-sm font-semibold">{form.holder_name || 'Nome no cartao'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase text-white/55">Validade</p>
+                    <p className="mt-1 text-sm font-semibold">{form.expiry_month || 'MM'}/{form.expiry_year || 'AAAA'}</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-5 grid gap-4">
                 <div>
                   <label className={labelClass}>Nome impresso no cartao</label>
-                  <input className={fieldClass} required value={form.holder_name} onChange={e => setForm({ ...form, holder_name: e.target.value })} />
+                  <input className={fieldClass} required autoComplete="cc-name" value={form.holder_name} onChange={e => setForm({ ...form, holder_name: e.target.value })} />
                 </div>
                 <div>
                   <label className={labelClass}>Numero do cartao</label>
-                  <input className={fieldClass} required inputMode="numeric" maxLength={19} value={form.number} onChange={e => setForm({ ...form, number: e.target.value })} />
+                  <input className={fieldClass} required autoComplete="cc-number" inputMode="numeric" maxLength={23} value={form.number} onChange={e => setForm({ ...form, number: maskCardNumber(e.target.value) })} />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className={labelClass}>Mes</label>
-                    <input className={fieldClass} required inputMode="numeric" maxLength={2} value={form.expiry_month} onChange={e => setForm({ ...form, expiry_month: e.target.value })} />
+                    <input className={fieldClass} required autoComplete="cc-exp-month" inputMode="numeric" maxLength={2} value={form.expiry_month} onChange={e => setForm({ ...form, expiry_month: maskTwoDigits(e.target.value) })} />
                   </div>
                   <div>
                     <label className={labelClass}>Ano</label>
-                    <input className={fieldClass} required inputMode="numeric" maxLength={4} value={form.expiry_year} onChange={e => setForm({ ...form, expiry_year: e.target.value })} />
+                    <input className={fieldClass} required autoComplete="cc-exp-year" inputMode="numeric" maxLength={4} value={form.expiry_year} onChange={e => setForm({ ...form, expiry_year: maskFourDigits(e.target.value) })} />
                   </div>
                   <div>
                     <label className={labelClass}>CVV</label>
-                    <input className={fieldClass} required inputMode="numeric" maxLength={4} value={form.ccv} onChange={e => setForm({ ...form, ccv: e.target.value })} />
+                    <input className={fieldClass} required autoComplete="cc-csc" inputMode="numeric" maxLength={4} value={form.ccv} onChange={e => setForm({ ...form, ccv: maskFourDigits(e.target.value) })} />
                   </div>
                 </div>
               </div>
@@ -365,30 +406,30 @@ export default function CheckoutPage() {
               <div className="grid gap-4">
                 <div>
                   <label className={labelClass}>Nome do titular</label>
-                  <input className={fieldClass} required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                  <input className={fieldClass} required autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>
                     <label className={labelClass}>Email</label>
-                    <input className={fieldClass} required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                    <input className={fieldClass} required autoComplete="email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                   </div>
                   <div>
                     <label className={labelClass}>CPF/CNPJ</label>
-                    <input className={fieldClass} required value={form.cpf_cnpj} onChange={e => setForm({ ...form, cpf_cnpj: e.target.value })} />
+                    <input className={fieldClass} required inputMode="numeric" value={form.cpf_cnpj} onChange={e => setForm({ ...form, cpf_cnpj: maskDocument(e.target.value) })} />
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
                   <div>
                     <label className={labelClass}>CEP</label>
-                    <input className={fieldClass} required value={form.postal_code} onChange={e => setForm({ ...form, postal_code: e.target.value })} />
+                    <input className={fieldClass} required autoComplete="postal-code" inputMode="numeric" value={form.postal_code} onChange={e => setForm({ ...form, postal_code: maskPostalCode(e.target.value) })} />
                   </div>
                   <div>
                     <label className={labelClass}>Numero</label>
-                    <input className={fieldClass} required value={form.address_number} onChange={e => setForm({ ...form, address_number: e.target.value })} />
+                    <input className={fieldClass} required autoComplete="address-line2" value={form.address_number} onChange={e => setForm({ ...form, address_number: e.target.value })} />
                   </div>
                   <div>
                     <label className={labelClass}>Telefone</label>
-                    <input className={fieldClass} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                    <input className={fieldClass} autoComplete="tel" inputMode="tel" value={form.phone} onChange={e => setForm({ ...form, phone: maskPhone(e.target.value) })} />
                   </div>
                 </div>
               </div>
