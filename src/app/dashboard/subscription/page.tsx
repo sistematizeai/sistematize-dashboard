@@ -23,6 +23,11 @@ interface Subscription {
   status: string;
   next_due_date: string | null;
   started_at: string;
+  pending_plan_id?: string | null;
+  pending_billing_cycle?: string | null;
+  pending_value?: number | null;
+  pending_change_type?: 'upgrade' | 'downgrade' | null;
+  pending_effective_at?: string | null;
   plan: Plan;
 }
 
@@ -38,6 +43,8 @@ interface Invoice {
 
 interface SubscribeResponse {
   payment_url?: string | null;
+  change_type?: 'upgrade' | 'downgrade';
+  effective_at?: string | null;
 }
 
 const card = 'bg-white rounded-2xl border border-[var(--color-border)] p-6';
@@ -134,7 +141,10 @@ export default function SubscriptionPage() {
     setError('');
     setSuccess('');
     setPaymentUrl(null);
-    const paymentWindow = window.open('', '_blank', 'noopener,noreferrer');
+    const targetPlan = plans.find(plan => plan.id === planId);
+    const targetPrice = targetPlan ? (billingCycle === 'yearly' ? targetPlan.price_yearly : targetPlan.price_monthly) : 0;
+    const requiresImmediatePayment = Boolean(subscription && Number(targetPrice) > Number(subscription.value));
+    const paymentWindow = requiresImmediatePayment ? window.open('', '_blank', 'noopener,noreferrer') : null;
     try {
       const response = await api.post<SubscribeResponse>('/api/subscription/subscribe', {
         plan_id: planId,
@@ -167,11 +177,33 @@ export default function SubscriptionPage() {
     setUpgrading(true);
     setError('');
     setSuccess('');
+    setPaymentUrl(null);
+    const paymentWindow = window.open('', '_blank', 'noopener,noreferrer');
     try {
-      await api.put('/api/subscription/upgrade', { plan_id: planId, billing_cycle: billingCycle });
-      setSuccess('Plano atualizado com sucesso!');
+      const response = await api.put<SubscribeResponse>('/api/subscription/upgrade', {
+        plan_id: planId,
+        billing_cycle: billingCycle,
+        billing_type: 'UNDEFINED',
+      });
+      const url = response.data?.payment_url || null;
+      if (url) {
+        setPaymentUrl(url);
+        if (paymentWindow) {
+          paymentWindow.location.href = url;
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        setSuccess('Geramos a cobranca de upgrade. O plano muda somente depois da confirmacao do pagamento no Asaas.');
+      } else {
+        paymentWindow?.close();
+        const effectiveAt = response.data?.effective_at
+          ? new Date(response.data.effective_at).toLocaleDateString('pt-BR')
+          : 'na proxima cobranca';
+        setSuccess(`Downgrade agendado para ${effectiveAt}. Os beneficios atuais continuam ate o fim do ciclo.`);
+      }
       await loadData();
     } catch (err: unknown) {
+      paymentWindow?.close();
       setError(getApiErrorMessage(err, 'Erro ao atualizar plano.'));
     } finally {
       setUpgrading(false);
@@ -295,6 +327,17 @@ export default function SubscriptionPage() {
                 Proxima cobranca: {new Date(subscription.next_due_date).toLocaleDateString('pt-BR')}
               </p>
             )}
+            {subscription.pending_change_type && (
+              <p className="text-xs font-semibold text-amber-700">
+                {subscription.pending_change_type === 'upgrade'
+                  ? 'Upgrade pendente de pagamento.'
+                  : `Downgrade agendado para ${
+                    subscription.pending_effective_at
+                      ? new Date(subscription.pending_effective_at).toLocaleDateString('pt-BR')
+                      : 'a proxima cobranca'
+                  }.`}
+              </p>
+            )}
             <div className="ml-auto">
               <button
                 onClick={handleCancel}
@@ -344,6 +387,7 @@ export default function SubscriptionPage() {
           const isPopular = i === 1;
           const price = billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
           const monthlyEquivalent = billingCycle === 'yearly' ? plan.price_yearly / 12 : plan.price_monthly;
+          const planChangeType = subscription && Number(price) < Number(subscription.value) ? 'downgrade' : 'upgrade';
 
           return (
             <div
@@ -419,7 +463,11 @@ export default function SubscriptionPage() {
                       : 'border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]'
                   }`}
                 >
-                  {upgrading ? 'Atualizando...' : 'Mudar para este plano'}
+                  {upgrading
+                    ? 'Abrindo Asaas...'
+                    : planChangeType === 'downgrade'
+                      ? 'Agendar para proxima cobranca'
+                      : 'Mudar e pagar no Asaas'}
                 </button>
               ) : (
                 <button
