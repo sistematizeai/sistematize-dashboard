@@ -41,6 +41,16 @@ interface Invoice {
   invoice_url: string | null;
 }
 
+interface PaymentMethod {
+  id: string;
+  holder_name: string | null;
+  card_brand: string | null;
+  card_last4: string | null;
+  is_default: boolean;
+  status: string;
+  last_used_at?: string | null;
+}
+
 interface SubscribeResponse {
   checkout_url?: string | null;
   payment_url?: string | null;
@@ -114,6 +124,7 @@ export default function SubscriptionPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [subscribing, setSubscribing] = useState(false);
@@ -122,20 +133,23 @@ export default function SubscriptionPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [paymentMethodBusy, setPaymentMethodBusy] = useState<string | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     setLoading(true);
     try {
-      const [plansRes, subRes, invRes] = await Promise.all([
+      const [plansRes, subRes, invRes, methodsRes] = await Promise.all([
         api.get('/api/subscription/plans'),
         api.get('/api/subscription/current'),
         api.get('/api/subscription/invoices?limit=10'),
+        api.get('/api/subscription/payment-methods'),
       ]);
       setPlans(plansRes.data || []);
       setSubscription(subRes.data?.id ? subRes.data : null);
       setInvoices(invRes.data?.data || []);
+      setPaymentMethods(methodsRes.data?.data || []);
     } catch {
       setError('Erro ao carregar dados de assinatura.');
     } finally {
@@ -215,6 +229,37 @@ export default function SubscriptionPage() {
     }
   }
 
+  async function handleSetDefaultPaymentMethod(paymentMethodId: string) {
+    setPaymentMethodBusy(paymentMethodId);
+    setError('');
+    setSuccess('');
+    try {
+      await api.post(`/api/subscription/payment-methods/${paymentMethodId}/default`);
+      setSuccess('Cartao padrao atualizado para proximas cobrancas.');
+      await loadData();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao atualizar cartao padrao.'));
+    } finally {
+      setPaymentMethodBusy(null);
+    }
+  }
+
+  async function handleDisablePaymentMethod(paymentMethodId: string) {
+    if (!confirm('Remover este cartao salvo?')) return;
+    setPaymentMethodBusy(paymentMethodId);
+    setError('');
+    setSuccess('');
+    try {
+      await api.delete(`/api/subscription/payment-methods/${paymentMethodId}`);
+      setSuccess('Cartao salvo removido.');
+      await loadData();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao remover cartao salvo.'));
+    } finally {
+      setPaymentMethodBusy(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -290,6 +335,78 @@ export default function SubscriptionPage() {
       )}
 
       <AsaasCheckoutNotice />
+
+      <div className={`${card} mb-8`}>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Forma de pagamento</h2>
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+              Cartoes tokenizados no Asaas para proximas cobrancas e retentativas seguras.
+            </p>
+          </div>
+          {payableInvoice && (
+            <a
+              href={`/dashboard/checkout/${payableInvoice.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-xs font-bold text-white transition-all hover:brightness-110"
+            >
+              Atualizar no checkout
+            </a>
+          )}
+        </div>
+
+        {paymentMethods.length === 0 ? (
+          <div className="rounded-xl bg-[var(--color-bg-surface)] p-4 text-sm text-[var(--color-text-secondary)]">
+            Nenhum cartao salvo ainda. Ao pagar uma fatura com cartao no checkout, ele sera tokenizado e marcado como padrao.
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {paymentMethods.map(method => (
+              <div key={method.id} className="rounded-xl border border-[var(--color-border)] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-[var(--color-text-primary)]">
+                      {method.card_brand || 'Cartao'} final {method.card_last4 || '----'}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {method.holder_name || 'Titular nao informado'}
+                    </p>
+                    {method.last_used_at && (
+                      <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+                        Ultimo uso: {new Date(method.last_used_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
+                  {method.is_default && (
+                    <span className="rounded-full bg-[var(--color-green-soft)] px-3 py-1 text-[10px] font-bold uppercase text-[var(--color-green)]">
+                      Padrao
+                    </span>
+                  )}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  {!method.is_default && (
+                    <button
+                      onClick={() => handleSetDefaultPaymentMethod(method.id)}
+                      disabled={paymentMethodBusy === method.id}
+                      className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-text-secondary)] transition-all hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:opacity-50"
+                    >
+                      Tornar padrao
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDisablePaymentMethod(method.id)}
+                    disabled={paymentMethodBusy === method.id}
+                    className="rounded-lg px-3 py-2 text-xs font-semibold text-[var(--color-rose)] transition-all hover:bg-[var(--color-rose-soft)] disabled:opacity-50"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Current Subscription */}
       {subscription && (
@@ -515,7 +632,7 @@ export default function SubscriptionPage() {
                       {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('pt-BR') : '—'}
                     </td>
                     <td className="py-3.5 text-right">
-                      {inv.status === 'pending' && (
+                      {['pending', 'overdue', 'refused'].includes(inv.status) && (
                         <a
                           href={`/dashboard/checkout/${inv.id}`}
                           target="_blank"

@@ -7,7 +7,7 @@ import api from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/errors';
 import { maskDocument, maskPhone, unmask } from '@/lib/masks';
 
-type CheckoutMode = 'pix' | 'card' | 'boleto';
+type CheckoutMode = 'pix' | 'saved_card' | 'card' | 'boleto';
 
 interface CheckoutInvoice {
   id: string;
@@ -30,9 +30,21 @@ interface CheckoutSubscription {
   pending_plan?: { name: string } | null;
 }
 
+interface PaymentMethod {
+  id: string;
+  holder_name: string | null;
+  card_brand: string | null;
+  card_last4: string | null;
+  is_default: boolean;
+  status: string;
+  last_used_at?: string | null;
+}
+
 interface CheckoutData {
   invoice: CheckoutInvoice;
   subscription: CheckoutSubscription | null;
+  payment_methods?: PaymentMethod[];
+  default_payment_method?: PaymentMethod | null;
   asaas_fallback_url: string | null;
 }
 
@@ -183,6 +195,23 @@ export default function CheckoutPage() {
     }
   }
 
+  async function submitSavedCard() {
+    setPaying(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await api.post(`/api/subscription/checkout/${invoiceId}/pay-saved-card`);
+      setSuccess(response.data?.paid
+        ? 'Pagamento confirmado no cartao salvo. Seu plano sera atualizado automaticamente.'
+        : 'Pagamento enviado com o cartao salvo. Assim que a Asaas confirmar, atualizaremos seu plano.');
+      await loadCheckout();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Nao foi possivel pagar com o cartao salvo.'));
+    } finally {
+      setPaying(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -192,6 +221,7 @@ export default function CheckoutPage() {
   }
 
   const invoice = data?.invoice;
+  const defaultPaymentMethod = data?.default_payment_method || null;
 
   if (!invoice) {
     return (
@@ -274,8 +304,8 @@ export default function CheckoutPage() {
         </section>
 
         <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6">
-          <div className="mb-5 grid grid-cols-3 rounded-xl bg-[var(--color-bg-surface)] p-1">
-            {(['pix', 'card', 'boleto'] as CheckoutMode[]).map(item => (
+          <div className={`mb-5 grid ${defaultPaymentMethod ? 'grid-cols-4' : 'grid-cols-3'} rounded-xl bg-[var(--color-bg-surface)] p-1`}>
+            {(['pix', ...(defaultPaymentMethod ? ['saved_card' as CheckoutMode] : []), 'card', 'boleto'] as CheckoutMode[]).map(item => (
               <button
                 key={item}
                 onClick={() => setMode(item)}
@@ -285,7 +315,7 @@ export default function CheckoutPage() {
                     : 'text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]'
                 }`}
               >
-                {item === 'pix' ? 'Pix' : item === 'card' ? 'Cartao' : 'Boleto'}
+                {item === 'pix' ? 'Pix' : item === 'saved_card' ? 'Cartao salvo' : item === 'card' ? 'Novo cartao' : 'Boleto'}
               </button>
             ))}
           </div>
@@ -346,6 +376,41 @@ export default function CheckoutPage() {
               >
                 Abrir boleto
               </a>
+            </div>
+          )}
+
+          {mode === 'saved_card' && defaultPaymentMethod && (
+            <div>
+              <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Pagar com cartao salvo</h2>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                Usaremos o cartao padrao tokenizado no Asaas. Nenhum dado completo do cartao fica salvo na Sistematize.
+              </p>
+
+              <div className="mt-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-5">
+                <p className="text-xs font-semibold uppercase text-[var(--color-text-muted)]">Cartao padrao</p>
+                <div className="mt-3 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-base font-bold text-[var(--color-text-primary)]">
+                      {defaultPaymentMethod.card_brand || 'Cartao'} final {defaultPaymentMethod.card_last4 || '----'}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {defaultPaymentMethod.holder_name || 'Titular nao informado'}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-[var(--color-green-soft)] px-3 py-1 text-xs font-bold text-[var(--color-green)]">
+                    Tokenizado
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={submitSavedCard}
+                disabled={paying || isPaid(invoice.status)}
+                className="mt-6 w-full rounded-xl bg-gradient-to-r from-[#4A6CF7] to-[#6C5CE7] px-4 py-3.5 text-sm font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
+              >
+                {paying ? 'Cobrando cartao salvo...' : `Pagar ${formatCurrency(invoice.value)} com cartao salvo`}
+              </button>
             </div>
           )}
 
