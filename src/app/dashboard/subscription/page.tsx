@@ -42,6 +42,7 @@ interface Invoice {
 }
 
 interface SubscribeResponse {
+  checkout_url?: string | null;
   payment_url?: string | null;
   change_type?: 'upgrade' | 'downgrade';
   effective_at?: string | null;
@@ -83,14 +84,14 @@ function AsaasCheckoutNotice() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">
-            Pagamento seguro via Asaas
+            Checkout Sistematize com Asaas
           </p>
           <h2 className="mt-1 text-lg font-bold text-[var(--color-text-primary)]">
-            Ao assinar, uma nova aba abre o checkout do Asaas
+            Ao assinar, uma nova aba abre o checkout da Sistematize
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--color-text-secondary)]">
-            O cliente conclui o pagamento diretamente no ambiente seguro do Asaas, com cartao,
-            Pix/QR Code ou boleto conforme os metodos disponiveis na cobranca.
+            O cliente conclui o pagamento no nosso fluxo, com cartao tokenizado,
+            Pix/QR Code ou boleto processados pela Asaas por tras da operacao.
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold text-[var(--color-text-secondary)]">
@@ -114,7 +115,7 @@ export default function SubscriptionPage() {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -140,20 +141,20 @@ export default function SubscriptionPage() {
     setSubscribing(true);
     setError('');
     setSuccess('');
-    setPaymentUrl(null);
+    setCheckoutUrl(null);
     try {
       const response = await api.post<SubscribeResponse>('/api/subscription/subscribe', {
         plan_id: planId,
         billing_cycle: billingCycle,
         billing_type: 'UNDEFINED',
       });
-      const url = response.data?.payment_url || null;
+      const url = response.data?.checkout_url || response.data?.payment_url || null;
       if (url) {
-        setPaymentUrl(url);
+        setCheckoutUrl(url);
         window.open(url, '_blank', 'noopener,noreferrer');
-        setSuccess('Assinatura criada. Abrimos o checkout seguro do Asaas em uma nova aba para concluir o pagamento.');
+        setSuccess('Assinatura criada. Abrimos o checkout seguro da Sistematize em uma nova aba para concluir o pagamento.');
       } else {
-        setSuccess('Assinatura criada. Assim que o Asaas retornar a fatura, o botao de pagamento aparecera na lista abaixo.');
+        setSuccess('Assinatura criada. Assim que a fatura estiver pronta, o botao de pagamento aparecera na lista abaixo.');
       }
       await loadData();
     } catch (err: unknown) {
@@ -167,18 +168,18 @@ export default function SubscriptionPage() {
     setUpgrading(true);
     setError('');
     setSuccess('');
-    setPaymentUrl(null);
+    setCheckoutUrl(null);
     try {
       const response = await api.put<SubscribeResponse>('/api/subscription/upgrade', {
         plan_id: planId,
         billing_cycle: billingCycle,
         billing_type: 'UNDEFINED',
       });
-      const url = response.data?.payment_url || null;
+      const url = response.data?.checkout_url || response.data?.payment_url || null;
       if (url) {
-        setPaymentUrl(url);
+        setCheckoutUrl(url);
         window.open(url, '_blank', 'noopener,noreferrer');
-        setSuccess('Geramos a cobranca de upgrade. O plano muda somente depois da confirmacao do pagamento no Asaas.');
+        setSuccess('Geramos a cobranca de upgrade. O plano muda somente depois da confirmacao do pagamento.');
       } else {
         const effectiveAt = response.data?.effective_at
           ? new Date(response.data.effective_at).toLocaleDateString('pt-BR')
@@ -218,7 +219,7 @@ export default function SubscriptionPage() {
 
   const currentPlanId = subscription?.plan_id;
   const yearlyDiscount = Math.round((1 - (plans[0]?.price_yearly || 0) / ((plans[0]?.price_monthly || 1) * 12)) * 100);
-  const payableInvoice = invoices.find(inv => ['pending', 'overdue'].includes(inv.status) && inv.invoice_url);
+  const payableInvoice = invoices.find(inv => ['pending', 'overdue'].includes(inv.status));
 
   return (
     <div className="max-w-[1100px] mx-auto">
@@ -241,14 +242,14 @@ export default function SubscriptionPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
             <span>{success}</span>
           </div>
-          {paymentUrl && (
+          {checkoutUrl && (
             <a
-              href={paymentUrl}
+              href={checkoutUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-xl bg-[var(--color-green)] px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-110"
             >
-              Abrir checkout Asaas
+              Abrir checkout Sistematize
             </a>
           )}
         </div>
@@ -256,14 +257,14 @@ export default function SubscriptionPage() {
       {subscription?.status === 'overdue' && (
         <div className="mb-6 p-4 rounded-xl bg-[var(--color-rose-soft)] border border-[var(--color-rose)]/20 text-sm text-[var(--color-rose)] font-medium flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span>Sua assinatura esta atrasada. A conta fica restrita ate a regularizacao do pagamento.</span>
-          {payableInvoice?.invoice_url && (
+          {payableInvoice && (
             <a
-              href={payableInvoice.invoice_url}
+              href={`/dashboard/checkout/${payableInvoice.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-xl bg-[var(--color-rose)] px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-110"
             >
-              Pagar agora no Asaas
+              Pagar agora
             </a>
           )}
         </div>
@@ -447,10 +448,10 @@ export default function SubscriptionPage() {
                   }`}
                 >
                   {upgrading
-                    ? 'Abrindo Asaas...'
+                    ? 'Abrindo checkout...'
                     : planChangeType === 'downgrade'
                       ? 'Agendar para proxima cobranca'
-                      : 'Mudar e pagar no Asaas'}
+                      : 'Mudar e pagar'}
                 </button>
               ) : (
                 <button
@@ -462,7 +463,7 @@ export default function SubscriptionPage() {
                       : 'border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]'
                   }`}
                 >
-                  {subscribing ? 'Abrindo Asaas...' : 'Assinar e abrir Asaas'}
+                  {subscribing ? 'Abrindo checkout...' : 'Assinar e pagar'}
                 </button>
               )}
             </div>
@@ -495,15 +496,15 @@ export default function SubscriptionPage() {
                       {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('pt-BR') : '—'}
                     </td>
                     <td className="py-3.5 text-right">
-                      {inv.invoice_url && inv.status === 'pending' && (
+                      {inv.status === 'pending' && (
                         <a
-                          href={inv.invoice_url}
+                          href={`/dashboard/checkout/${inv.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-3 py-1.5 rounded-lg bg-[var(--color-accent)] text-white text-xs font-semibold hover:brightness-110 transition-all inline-flex items-center gap-1.5"
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                          Pagar no Asaas
+                          Pagar
                         </a>
                       )}
                     </td>
